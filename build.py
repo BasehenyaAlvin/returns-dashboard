@@ -12,16 +12,19 @@ import csv, json, io, urllib.request, datetime, os, sys
 # ════════════════════════════════════════════
 SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXx7pWn3HvjECaTJAN68LH2-7wPBM6r-DtrIR6sFbhlZh_R-4Dk6skYXQjnwmwCPd84swN72TCIU-H/pub?gid=6794188&single=true&output=csv"
 
-print("📥 Fetching data from Google Sheet...")
+# Email via Gmail SMTP (use an App Password, not your real password)
+# Go to myaccount.google.com > Security > App Passwords to generate one
+EMAIL_ENABLED  = True
+EMAIL_FROM     = os.environ.get("EMAIL_FROM", "")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
+EMAIL_TO       = os.environ.get("EMAIL_TO", "").split(",")
+EMAIL_SUBJECT  = "📊 Jumia Returns Dashboard Updated"
+CHAT_ENABLED   = False   # set to True after adding webhook
+CHAT_WEBHOOK   = os.environ.get("CHAT_WEBHOOK", "")
+DASHBOARD_URL  = "https://tranquil-profiterole-1c23a9.netlify.app"
 
-try:
-    req = urllib.request.Request(SHEET_URL, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        raw_csv = resp.read().decode("utf-8-sig")
-    print(f"✅ Fetched {len(raw_csv)//1024} KB of CSV data")
-except Exception as e:
-    print(f"❌ Failed to fetch sheet: {e}")
-    sys.exit(1)
+# Google Chat Webhook
+# Go to your Google Chat Space > Apps > Manage webhooks > Add webhook > Copy URL
 
 # ── PARSE CSV ──
 reader = csv.DictReader(io.StringIO(raw_csv))
