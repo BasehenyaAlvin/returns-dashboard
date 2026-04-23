@@ -11,7 +11,7 @@ from email.mime.text import MIMEText
 # ════════════════════════════════════════════════════
 # CONFIG — all values come from GitHub Secrets
 # ════════════════════════════════════════════════════
-SHEET_URL      = os.environ.get("https://docs.google.com/spreadsheets/d/e/2PACX-1vQXx7pWn3HvjECaTJAN68LH2-7wPBM6r-DtrIR6sFbhlZh_R-4Dk6skYXQjnwmwCPd84swN72TCIU-H/pub?gid=6794188&single=true&output=csv", "")
+SHEET_URL      = os.environ.get("https://docs.google.com/spreadsheets/d/e/2PACX-1vR5-CshzMT7zUIFzrh8cUQS0ZWECYbFfsE9m4VFniqkHupqBWWmRuYSphbGqwRCiYHOAW8bOrmD42TP/pub?gid=6794188&single=true&output=csv", "")
 EMAIL_ENABLED  = True
 EMAIL_FROM     = os.environ.get("EMAIL_FROM", "")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
