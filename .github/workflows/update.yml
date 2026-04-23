@@ -20,10 +20,12 @@ jobs:
 
       - name: 🔨 Run build script
         env:
+          SHEET_URL:      ${{ secrets.SHEET_URL }} 
           EMAIL_FROM:     ${{ secrets.EMAIL_FROM }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_TO:       ${{ secrets.EMAIL_TO }}
           CHAT_WEBHOOK:   ${{ secrets.CHAT_WEBHOOK }}
+          DASHBOARD_URL:  ${{ secrets.DASHBOARD_URL }}
         run: python build.py
 
       - name: 📤 Commit and push updated dashboard
