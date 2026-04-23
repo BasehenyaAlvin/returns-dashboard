@@ -19,7 +19,7 @@ EMAIL_TO       = [e.strip() for e in os.environ.get("EMAIL_TO", "").split(",") i
 EMAIL_SUBJECT  = "📊 Jumia Returns Dashboard Updated"
 CHAT_ENABLED   = bool(os.environ.get("CHAT_WEBHOOK", ""))
 CHAT_WEBHOOK   = os.environ.get("CHAT_WEBHOOK", "")
-DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://returns-shipped.netlify.app/")
+DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://returns-shipped.netlify.app")
 
 # ════════════════════════════════════════════════════
 # STEP 1 — FETCH GOOGLE SHEET
