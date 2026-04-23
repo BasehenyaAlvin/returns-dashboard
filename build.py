@@ -21,7 +21,7 @@ EMAIL_TO       = os.environ.get("EMAIL_TO", "").split(",")
 EMAIL_SUBJECT  = "📊 Jumia Returns Dashboard Updated"
 CHAT_ENABLED   = False   # set to True after adding webhook
 CHAT_WEBHOOK   = os.environ.get("CHAT_WEBHOOK", "")
-DASHBOARD_URL  = "https://tranquil-profiterole-1c23a9.netlify.app"
+DASHBOARD_URL  = "https://returns-shipped.netlify.app/"
 
 # Google Chat Webhook
 # Go to your Google Chat Space > Apps > Manage webhooks > Add webhook > Copy URL
