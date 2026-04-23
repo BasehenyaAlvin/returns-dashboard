@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Jumia Returns Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080c14;--surface:#0f1623;--surface2:#151d2e;--surface3:#1a2338;
+  --border:#1e2d45;--border2:#243352;
+  --c1:#f97316;--c1b:rgba(249,115,22,.12);
+  --c2:#06b6d4;--c2b:rgba(6,182,212,.12);
+  --c3:#a855f7;--c3b:rgba(168,85,247,.12);
+  --c4:#22c55e;--c4b:rgba(34,197,94,.12);
+  --c5:#f43f5e;--c5b:rgba(244,63,94,.12);
+  --c6:#eab308;--c6b:rgba(234,179,8,.12);
+  --text:#f0f4ff;--text2:#c8d6f0;--text3:#8ba3cc;
+  --sidebar-w:225px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px}
+
+.sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--c1),#dc6010);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;font-family:'Space Grotesk',sans-serif;box-shadow:0 0 16px rgba(249,115,22,.4)}
+.logo-text{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;line-height:1.3}
+.logo-sub{font-size:10px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.08em}
+nav{padding:12px 8px;flex:1;overflow-y:auto}
+.nav-section{font-size:10px;font-weight:700;color:var(--text2);padding:10px 10px 4px;text-transform:uppercase;letter-spacing:.1em}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;margin-bottom:1px;transition:all .15s;user-select:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:linear-gradient(90deg,rgba(249,115,22,.18),rgba(249,115,22,.05));color:var(--c1);font-weight:600;border-left:2px solid var(--c1)}
+.nav-item.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--c1);color:#fff;border-radius:20px;font-size:9px;font-weight:700;padding:1px 6px}
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text2)}
+.sidebar-footer strong{display:block;color:var(--text);margin-bottom:2px;font-size:12px}
+
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:10px;flex-wrap:wrap}
+.topbar-title h1{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;background:linear-gradient(90deg,#fff,#7e93b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.topbar-title p{font-size:11px;color:var(--text2);margin-top:1px}
+.filters{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* FILTER DROPDOWNS */
+.f-wrap{position:relative}
+.f-btn{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s;white-space:nowrap;user-select:none}
+.f-btn:hover,.f-btn.open{border-color:var(--c1);color:var(--c1)}
+.f-btn.active-filter{border-color:var(--c1);background:var(--c1b);color:var(--c1);font-weight:700}
+.f-btn svg{width:11px;height:11px;transition:transform .2s}
+.f-btn.open svg.arr{transform:rotate(180deg)}
+.f-dropdown{position:absolute;top:calc(100% + 5px);left:0;min-width:200px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:200;display:none;max-height:280px;overflow-y:auto;padding:6px}
+.f-dropdown.open{display:block}
+.f-search{width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px;color:var(--text);outline:none;margin-bottom:5px}
+.f-search::placeholder{color:var(--text3)}
+.f-option{padding:6px 10px;border-radius:6px;font-size:12px;color:var(--text);cursor:pointer;transition:background .1s;display:flex;align-items:center;gap:7px}
+.f-option:hover{background:var(--surface3);color:var(--text)}
+.f-option.selected{background:var(--c1b);color:var(--c1);font-weight:600}
+.f-option .chk{width:13px;height:13px;border-radius:3px;border:1px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px}
+.f-option.selected .chk{background:var(--c1);border-color:var(--c1);color:#fff}
+
+.reset-btn{display:flex;align-items:center;gap:5px;background:var(--c5b);border:1px solid rgba(244,63,94,.3);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--c5);cursor:pointer;transition:all .15s;white-space:nowrap}
+.reset-btn:hover{background:var(--c5);color:#fff}
+
+/* ACTIVE FILTER PILLS */
+.active-pills{display:flex;gap:5px;flex-wrap:wrap;padding:6px 20px;background:var(--surface);border-bottom:1px solid var(--border);min-height:0;transition:all .2s}
+.active-pills:empty{display:none}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;cursor:pointer}
+.pill-kam{background:var(--c1b);color:var(--c1);border:1px solid rgba(249,115,22,.3)}
+.pill-vendor{background:var(--c2b);color:var(--c2);border:1px solid rgba(6,182,212,.3)}
+.pill-brand{background:var(--c3b);color:var(--c3);border:1px solid rgba(168,85,247,.3)}
+.pill-remove{opacity:.6;font-size:11px}
+.pill:hover .pill-remove{opacity:1}
+
+/* FILTER STATS BAR */
+.stats-bar{padding:6px 20px;background:rgba(249,115,22,.04);border-bottom:1px solid rgba(249,115,22,.15);display:flex;gap:16px;align-items:center;font-size:11px;display:none}
+.stats-bar.visible{display:flex}
+.stats-bar .sb{color:var(--text2)}
+.stats-bar .sv{color:var(--c1);font-weight:700;margin-left:4px}
+
+/* PAGES */
+.page{display:none;padding:16px 20px}
+.page.active{display:block}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.kpi-glow{position:absolute;top:-30px;right:-30px;width:80px;height:80px;border-radius:50%;filter:blur(30px);opacity:.2}
+.kpi-accent{position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.kpi-value{font-family:'Space Grotesk',sans-serif;font-size:23px;font-weight:800;line-height:1;margin-bottom:5px;transition:all .3s}
+.kpi-change{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* LAYOUT */
+.row{display:grid;gap:11px;margin-bottom:11px}
+.r3{grid-template-columns:1fr 1.6fr 1fr}
+.r4{grid-template-columns:1fr 1fr 1fr .85fr}
+.r3b{grid-template-columns:1.2fr 1fr 1fr}
+.r2{grid-template-columns:1fr 1fr}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:11px;display:flex;align-items:center;justify-content:space-between}
+.card-title .sub{font-size:11px;color:var(--text2);font-weight:400;text-transform:none;letter-spacing:0}
+.card-title .pill2{padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase}
+
+/* DONUT */
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.legend-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:6px}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-right:7px}
+.legend-name{color:var(--text);flex:1;font-size:12px;font-weight:500}
+.legend-num{font-weight:800;color:var(--text);font-size:13px;white-space:nowrap}
+.legend-pct{font-size:11px;color:var(--text2);margin-left:3px}
+.legend-total{border-top:1px solid var(--border2);padding-top:7px;margin-top:4px;display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--text)}
+
+/* PROGRESS */
+.prog-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.prog-label{font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog-bar-wrap{flex:1;background:var(--surface3);border-radius:4px;height:6px;overflow:hidden}
+.prog-bar{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.prog-val{width:48px;text-align:right;font-weight:700;color:var(--text);font-size:11px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;max-height:260px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{position:sticky;top:0;z-index:1}
+thead th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);padding:8px 10px;border-bottom:1px solid var(--border2);text-align:left;background:var(--surface2)}
+tbody tr{border-bottom:1px solid rgba(30,45,69,.5);transition:background .1s}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:8px 10px;color:var(--text)}
+tbody td:first-child{color:#fff;font-weight:600}
+.badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:20px;font-size:9px;font-weight:700}
+.b1{background:rgba(249,115,22,.15);color:#f97316}
+.b2{background:rgba(6,182,212,.15);color:#06b6d4}
+.b3{background:rgba(168,85,247,.15);color:#a855f7}
+.b4{background:rgba(34,197,94,.15);color:#22c55e}
+.b5{background:rgba(244,63,94,.15);color:#f43f5e}
+.b6{background:rgba(234,179,8,.15);color:#eab308}
+
+.pag{display:flex;align-items:center;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--text2)}
+.pag-btns{display:flex;gap:4px}
+.pag-btn{background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:3px 9px;color:var(--text);cursor:pointer;font-size:11px;font-weight:600;transition:all .15s}
+.pag-btn:hover{border-color:var(--c1);color:var(--c1)}
+
+.empty-state{text-align:center;padding:24px;color:var(--text2);font-size:12px}
+.empty-state .ei{font-size:28px;margin-bottom:8px}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+@media(max-width:1300px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.r3,.r4,.r3b{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.sidebar{display:none}.main{margin-left:0}.kpi-grid,.r3,.r4,.r3b,.r2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">J</div>
+    <div class="logo-text">Jumia Returns<div class="logo-sub">Analytics · UG</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('overview',this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+      Overview <span class="nav-badge" id="nb-total">3,469</span>
+    </div>
+    <div class="nav-item" onclick="showPage('aging',this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Aging Analysis
+    </div>
+    <div class="nav-item" onclick="showPage('vendor',this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Vendor Performance
+    </div>
+    <div class="nav-section">Drill Downs</div>
+    <div class="nav-item" onclick="showPage('brand',this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+      Brand Analysis
+    </div>
+    <div class="nav-item" onclick="showPage('kam',this)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      KAM Performance
+    </div>
+    <div class="nav-item" onclick="showPage('reasons',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Return Reasons</div>
+    <div class="nav-item" onclick="showPage('detail',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Detailed Data</div>
+  </nav>
+  <div class="sidebar-footer"><strong>Last Updated</strong>{{LAST_UPDATED}}</div>
+</aside>
+
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title">
+      <h1>RETURNS ANALYTICS DASHBOARD</h1>
+      <p>Track, Analyze & Improve Returns · KAM Focus Week 17</p>
+    </div>
+    <div class="filters">
+      <!-- KAM filter -->
+      <div class="f-wrap">
+        <div class="f-btn" id="fb-kam" onclick="toggleDropdown('dd-kam',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <span id="fl-kam">KAM: All</span>
+          <svg class="arr" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="10"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="f-dropdown" id="dd-kam">
+          <input class="f-search" placeholder="Search KAM..." oninput="filterOpts('dd-kam',this.value)"/>
+          <div class="f-option" onclick="selectFilter('kam','','KAM: All')"><div class="chk" id="chk-kam-">✓</div>All KAMs</div>
+          <div class="f-option" onclick="selectFilter('kam','Andrew Ssessanga','Andrew Ssessanga')" id="fopt-kam-0"><div class="chk" id="chk-kam-0"></div>Andrew Ssessanga</div>
+          <div class="f-option" onclick="selectFilter('kam','Anitah Ankunda','Anitah Ankunda')" id="fopt-kam-1"><div class="chk" id="chk-kam-1"></div>Anitah Ankunda</div>
+          <div class="f-option" onclick="selectFilter('kam','Brian Nyingambe','Brian Nyingambe')" id="fopt-kam-2"><div class="chk" id="chk-kam-2"></div>Brian Nyingambe</div>
+          <div class="f-option" onclick="selectFilter('kam','Calvin Ruyonga','Calvin Ruyonga')" id="fopt-kam-3"><div class="chk" id="chk-kam-3"></div>Calvin Ruyonga</div>
+          <div class="f-option" onclick="selectFilter('kam','Cathy Julie Kenyangi','Cathy Julie Kenyangi')" id="fopt-kam-4"><div class="chk" id="chk-kam-4"></div>Cathy Julie Kenyangi</div>
+          <div class="f-option" onclick="selectFilter('kam','Cathy Nalumansi','Cathy Nalumansi')" id="fopt-kam-5"><div class="chk" id="chk-kam-5"></div>Cathy Nalumansi</div>
+          <div class="f-option" onclick="selectFilter('kam','Edward Ssembatya','Edward Ssembatya')" id="fopt-kam-6"><div class="chk" id="chk-kam-6"></div>Edward Ssembatya</div>
+          <div class="f-option" onclick="selectFilter('kam','Mark Mukisa','Mark Mukisa')" id="fopt-kam-7"><div class="chk" id="chk-kam-7"></div>Mark Mukisa</div>
+          <div class="f-option" onclick="selectFilter('kam','Moreen Mpamukama','Moreen Mpamukama')" id="fopt-kam-8"><div class="chk" id="chk-kam-8"></div>Moreen Mpamukama</div>
+          <div class="f-option" onclick="selectFilter('kam','Pelecia Ampiire','Pelecia Ampiire')" id="fopt-kam-9"><div class="chk" id="chk-kam-9"></div>Pelecia Ampiire</div>
+          <div class="f-option" onclick="selectFilter('kam','Reinhard Byamugisha','Reinhard Byamugisha')" id="fopt-kam-10"><div class="chk" id="chk-kam-10"></div>Reinhard Byamugisha</div>
+        </div>
+      </div>
+      <!-- Vendor filter -->
+      <div class="f-wrap">
+        <div class="f-btn" id="fb-vendor" onclick="toggleDropdown('dd-vendor',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/></svg>
+          <span id="fl-vendor">Vendor: All</span>
+          <svg class="arr" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="10"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="f-dropdown" id="dd-vendor" style="min-width:240px">
+          <input class="f-search" placeholder="Search vendor..." oninput="filterOpts('dd-vendor',this.value)"/>
+          <div class="f-option" onclick="selectFilter('vendor','','Vendor: All')"><div class="chk" id="chk-vendor-">✓</div>All Vendors</div>
+          <div class="f-option" onclick="selectFilter('vendor','5 star genuine stores','5 star genuine stores')" id="fopt-vendor-0"><div class="chk" id="chk-vendor-0"></div>5 star genuine stores</div>
+          <div class="f-option" onclick="selectFilter('vendor','A & A ELECTRONICS','A & A ELECTRONICS')" id="fopt-vendor-1"><div class="chk" id="chk-vendor-1"></div>A & A ELECTRONICS</div>
+          <div class="f-option" onclick="selectFilter('vendor','A''s computing world','A''s computing world')" id="fopt-vendor-2"><div class="chk" id="chk-vendor-2"></div>A's computing world</div>
+          <div class="f-option" onclick="selectFilter('vendor','AB Sporting Goods','AB Sporting Goods')" id="fopt-vendor-3"><div class="chk" id="chk-vendor-3"></div>AB Sporting Goods</div>
+          <div class="f-option" onclick="selectFilter('vendor','ALPHA PICKS','ALPHA PICKS')" id="fopt-vendor-4"><div class="chk" id="chk-vendor-4"></div>ALPHA PICKS</div>
+          <div class="f-option" onclick="selectFilter('vendor','ALPHA T','ALPHA T')" id="fopt-vendor-5"><div class="chk" id="chk-vendor-5"></div>ALPHA T</div>
+          <div class="f-option" onclick="selectFilter('vendor','AMD','AMD')" id="fopt-vendor-6"><div class="chk" id="chk-vendor-6"></div>AMD</div>
+          <div class="f-option" onclick="selectFilter('vendor','AMORTECH300','AMORTECH300')" id="fopt-vendor-7"><div class="chk" id="chk-vendor-7"></div>AMORTECH300</div>
+          <div class="f-option" onclick="selectFilter('vendor','ARHANORY-COD','ARHANORY-COD')" id="fopt-vendor-8"><div class="chk" id="chk-vendor-8"></div>ARHANORY-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','ASHOP','ASHOP')" id="fopt-vendor-9"><div class="chk" id="chk-vendor-9"></div>ASHOP</div>
+          <div class="f-option" onclick="selectFilter('vendor','ATWOOKI','ATWOOKI')" id="fopt-vendor-10"><div class="chk" id="chk-vendor-10"></div>ATWOOKI</div>
+          <div class="f-option" onclick="selectFilter('vendor','AYAN COSMETICS.','AYAN COSMETICS.')" id="fopt-vendor-11"><div class="chk" id="chk-vendor-11"></div>AYAN COSMETICS.</div>
+          <div class="f-option" onclick="selectFilter('vendor','Accesorie House Bismilah','Accesorie House Bismilah')" id="fopt-vendor-12"><div class="chk" id="chk-vendor-12"></div>Accesorie House Bismilah</div>
+          <div class="f-option" onclick="selectFilter('vendor','Adullam Chronicles','Adullam Chronicles')" id="fopt-vendor-13"><div class="chk" id="chk-vendor-13"></div>Adullam Chronicles</div>
+          <div class="f-option" onclick="selectFilter('vendor','Advanced Trend - COD','Advanced Trend - COD')" id="fopt-vendor-14"><div class="chk" id="chk-vendor-14"></div>Advanced Trend - COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Affordable bags','Affordable bags')" id="fopt-vendor-15"><div class="chk" id="chk-vendor-15"></div>Affordable bags</div>
+          <div class="f-option" onclick="selectFilter('vendor','Afican Closet-COD','Afican Closet-COD')" id="fopt-vendor-16"><div class="chk" id="chk-vendor-16"></div>Afican Closet-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Afya-COD','Afya-COD')" id="fopt-vendor-17"><div class="chk" id="chk-vendor-17"></div>Afya-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Aidah Gadgets','Aidah Gadgets')" id="fopt-vendor-18"><div class="chk" id="chk-vendor-18"></div>Aidah Gadgets</div>
+          <div class="f-option" onclick="selectFilter('vendor','Alisa-COD','Alisa-COD')" id="fopt-vendor-19"><div class="chk" id="chk-vendor-19"></div>Alisa-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Alpha Stores','Alpha Stores')" id="fopt-vendor-20"><div class="chk" id="chk-vendor-20"></div>Alpha Stores</div>
+          <div class="f-option" onclick="selectFilter('vendor','Amelia''s Earth creations home decor','Amelia''s Earth creations home decor')" id="fopt-vendor-21"><div class="chk" id="chk-vendor-21"></div>Amelia's Earth creations home decor</div>
+          <div class="f-option" onclick="selectFilter('vendor','Andy''s shoe hub','Andy''s shoe hub')" id="fopt-vendor-22"><div class="chk" id="chk-vendor-22"></div>Andy's shoe hub</div>
+          <div class="f-option" onclick="selectFilter('vendor','Angel Phones','Angel Phones')" id="fopt-vendor-23"><div class="chk" id="chk-vendor-23"></div>Angel Phones</div>
+          <div class="f-option" onclick="selectFilter('vendor','Apple 256','Apple 256')" id="fopt-vendor-24"><div class="chk" id="chk-vendor-24"></div>Apple 256</div>
+          <div class="f-option" onclick="selectFilter('vendor','Appliance World - AC','Appliance World - AC')" id="fopt-vendor-25"><div class="chk" id="chk-vendor-25"></div>Appliance World - AC</div>
+          <div class="f-option" onclick="selectFilter('vendor','Appliance world 2040','Appliance world 2040')" id="fopt-vendor-26"><div class="chk" id="chk-vendor-26"></div>Appliance world 2040</div>
+          <div class="f-option" onclick="selectFilter('vendor','Ashler''s Shop','Ashler''s Shop')" id="fopt-vendor-27"><div class="chk" id="chk-vendor-27"></div>Ashler's Shop</div>
+          <div class="f-option" onclick="selectFilter('vendor','Authentic suppliers','Authentic suppliers')" id="fopt-vendor-28"><div class="chk" id="chk-vendor-28"></div>Authentic suppliers</div>
+          <div class="f-option" onclick="selectFilter('vendor','BEE KEEPER','BEE KEEPER')" id="fopt-vendor-29"><div class="chk" id="chk-vendor-29"></div>BEE KEEPER</div>
+          <div class="f-option" onclick="selectFilter('vendor','BEEZY-Online Hub','BEEZY-Online Hub')" id="fopt-vendor-30"><div class="chk" id="chk-vendor-30"></div>BEEZY-Online Hub</div>
+          <div class="f-option" onclick="selectFilter('vendor','BLACK FRIDAY FLASH SALES','BLACK FRIDAY FLASH SALES')" id="fopt-vendor-31"><div class="chk" id="chk-vendor-31"></div>BLACK FRIDAY FLASH SALES</div>
+          <div class="f-option" onclick="selectFilter('vendor','BOMGE Electronic music - COD','BOMGE Electronic music - COD')" id="fopt-vendor-32"><div class="chk" id="chk-vendor-32"></div>BOMGE Electronic music - COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','BOUS Electronics','BOUS Electronics')" id="fopt-vendor-33"><div class="chk" id="chk-vendor-33"></div>BOUS Electronics</div>
+          <div class="f-option" onclick="selectFilter('vendor','BQ Mall-COD','BQ Mall-COD')" id="fopt-vendor-34"><div class="chk" id="chk-vendor-34"></div>BQ Mall-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','BQ Mall-Sea-COD','BQ Mall-Sea-COD')" id="fopt-vendor-35"><div class="chk" id="chk-vendor-35"></div>BQ Mall-Sea-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Baby Storez.','Baby Storez.')" id="fopt-vendor-36"><div class="chk" id="chk-vendor-36"></div>Baby Storez.</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bag Haven','Bag Haven')" id="fopt-vendor-37"><div class="chk" id="chk-vendor-37"></div>Bag Haven</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bariah Kitchen Hub','Bariah Kitchen Hub')" id="fopt-vendor-38"><div class="chk" id="chk-vendor-38"></div>Bariah Kitchen Hub</div>
+          <div class="f-option" onclick="selectFilter('vendor','Batyahw','Batyahw')" id="fopt-vendor-39"><div class="chk" id="chk-vendor-39"></div>Batyahw</div>
+          <div class="f-option" onclick="selectFilter('vendor','Belarus Computers','Belarus Computers')" id="fopt-vendor-40"><div class="chk" id="chk-vendor-40"></div>Belarus Computers</div>
+          <div class="f-option" onclick="selectFilter('vendor','Ben''s Shoe Center','Ben''s Shoe Center')" id="fopt-vendor-41"><div class="chk" id="chk-vendor-41"></div>Ben's Shoe Center</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bend The Trend','Bend The Trend')" id="fopt-vendor-42"><div class="chk" id="chk-vendor-42"></div>Bend The Trend</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bennin Quality Combos','Bennin Quality Combos')" id="fopt-vendor-43"><div class="chk" id="chk-vendor-43"></div>Bennin Quality Combos</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bensoo Official Store-COD','Bensoo Official Store-COD')" id="fopt-vendor-44"><div class="chk" id="chk-vendor-44"></div>Bensoo Official Store-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Berrykey-COD','Berrykey-COD')" id="fopt-vendor-45"><div class="chk" id="chk-vendor-45"></div>Berrykey-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bestwish-COD','Bestwish-COD')" id="fopt-vendor-46"><div class="chk" id="chk-vendor-46"></div>Bestwish-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Besundy Premium Store-COD','Besundy Premium Store-COD')" id="fopt-vendor-47"><div class="chk" id="chk-vendor-47"></div>Besundy Premium Store-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Blissful Instant-COD','Blissful Instant-COD')" id="fopt-vendor-48"><div class="chk" id="chk-vendor-48"></div>Blissful Instant-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Blue Vision Accessories','Blue Vision Accessories')" id="fopt-vendor-49"><div class="chk" id="chk-vendor-49"></div>Blue Vision Accessories</div>
+          <div class="f-option" onclick="selectFilter('vendor','Boxer','Boxer')" id="fopt-vendor-50"><div class="chk" id="chk-vendor-50"></div>Boxer</div>
+          <div class="f-option" onclick="selectFilter('vendor','Brandnew','Brandnew')" id="fopt-vendor-51"><div class="chk" id="chk-vendor-51"></div>Brandnew</div>
+          <div class="f-option" onclick="selectFilter('vendor','Brave_Shop-COD','Brave_Shop-COD')" id="fopt-vendor-52"><div class="chk" id="chk-vendor-52"></div>Brave_Shop-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bravo UG - AC','Bravo UG - AC')" id="fopt-vendor-53"><div class="chk" id="chk-vendor-53"></div>Bravo UG - AC</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bride Price.','Bride Price.')" id="fopt-vendor-54"><div class="chk" id="chk-vendor-54"></div>Bride Price.</div>
+          <div class="f-option" onclick="selectFilter('vendor','Bwetinde Business Enterprises','Bwetinde Business Enterprises')" id="fopt-vendor-55"><div class="chk" id="chk-vendor-55"></div>Bwetinde Business Enterprises</div>
+          <div class="f-option" onclick="selectFilter('vendor','Byte','Byte')" id="fopt-vendor-56"><div class="chk" id="chk-vendor-56"></div>Byte</div>
+          <div class="f-option" onclick="selectFilter('vendor','C idea official store-COD','C idea official store-COD')" id="fopt-vendor-57"><div class="chk" id="chk-vendor-57"></div>C idea official store-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','CHAND','CHAND')" id="fopt-vendor-58"><div class="chk" id="chk-vendor-58"></div>CHAND</div>
+          <div class="f-option" onclick="selectFilter('vendor','CLEAN SALES SHOP','CLEAN SALES SHOP')" id="fopt-vendor-59"><div class="chk" id="chk-vendor-59"></div>CLEAN SALES SHOP</div>
+          <div class="f-option" onclick="selectFilter('vendor','CONSAYA','CONSAYA')" id="fopt-vendor-60"><div class="chk" id="chk-vendor-60"></div>CONSAYA</div>
+          <div class="f-option" onclick="selectFilter('vendor','Calvin Lux Enterprise','Calvin Lux Enterprise')" id="fopt-vendor-61"><div class="chk" id="chk-vendor-61"></div>Calvin Lux Enterprise</div>
+          <div class="f-option" onclick="selectFilter('vendor','Cathy Collection 1','Cathy Collection 1')" id="fopt-vendor-62"><div class="chk" id="chk-vendor-62"></div>Cathy Collection 1</div>
+          <div class="f-option" onclick="selectFilter('vendor','Catrina Shoppers','Catrina Shoppers')" id="fopt-vendor-63"><div class="chk" id="chk-vendor-63"></div>Catrina Shoppers</div>
+          <div class="f-option" onclick="selectFilter('vendor','Chap Chap UG Kitchenware','Chap Chap UG Kitchenware')" id="fopt-vendor-64"><div class="chk" id="chk-vendor-64"></div>Chap Chap UG Kitchenware</div>
+          <div class="f-option" onclick="selectFilter('vendor','Chic-COD','Chic-COD')" id="fopt-vendor-65"><div class="chk" id="chk-vendor-65"></div>Chic-COD</div>
+          <div class="f-option" onclick="selectFilter('vendor','Chrindy Power Solutions','Chrindy Power Solutions')" id="fopt-vendor-66"><div class="chk" id="chk-vendor-66"></div>Chrindy Power Solutions</div>
+          <div class="f-option" onclick="selectFilter('vendor','Citi Trust Uganda','Citi Trust Uganda')" id="fopt-vendor-67"><div class="chk" id="chk-vendor-67"></div>Citi Trust Uganda</div>
+          <div class="f-option" onclick="selectFilter('vendor','City Store','City Store')" id="fopt-vendor-68"><div class="chk" id="chk-vendor-68"></div>City Store</div>
+          <div class="f-option" onclick="selectFilter('vendor','ClassicGadgets','ClassicGadgets')" id="fopt-vendor-69"><div class="chk" id="chk-vendor-69"></div>ClassicGadgets</div>
+          <div class="f-option" onclick="selectFilter('vendor','Classics','Classics')" id="fopt-vendor-70"><div class="chk" id="chk-vendor-70"></div>Classics</div>
+          <div class="f-option" onclick="selectFilter('vendor','Click & Buy','Click & Buy')" id="fopt-vendor-71"><div class="chk" id="chk-vendor-71"></div>Click & Buy</div>
+          <div class="f-option" onclick="selectFilter('vendor','Cmfort Ville','Cmfort Ville')" id="fopt-vendor-72"><div class="chk" id="chk-vendor-72"></div>Cmfort Ville</div>
+          <div class="f-option" onclick="selectFilter('vendor','Collection biz','Collection biz')" id="fopt-vendor-73"><div class="chk" id="chk-vendor-73"></div>Collection biz</div>
+          <div class="f-option" onclick="selectFilter('vendor','Compute Technologies','Compute Technologies')" id="fopt-vendor-74"><div class="chk" id="chk-vendor-74"></div>Compute Technologies</div>
+          <div class="f-option" onclick="selectFilter('vendor','Computer world','Computer world')" id="fopt-vendor-75"><div class="chk" id="chk-vendor-75"></div>Computer world</div>
+          <div class="f-option" onclick="selectFilter('vendor','ConexLab scientific ltd','ConexLab scientific ltd')" id="fopt-vendor-76"><div class="chk" id="chk-vendor-76"></div>ConexLab scientific ltd</div>
+          <div class="f-option" onclick="selectFilter('vendor','Core Essentials','Core Essentials')" id="fopt-vendor-77"><div class="chk" id="chk-vendor-77"></div>Core Essentials</div>
+          <div class="f-option" onclick="selectFilter('vendor','Cozy Home Textiles','Cozy Home Textiles')" id="fopt-vendor-78"><div class="chk" id="chk-vendor-78"></div>Cozy Home Textiles</div>
+          <div class="f-option" onclick="selectFilter('vendor','CreativeCorner-COD','CreativeCorner-COD')" id="fopt-vendor-79"><div class="chk" id="chk-vendor-79"></div>CreativeCorner-COD</div>
+        </div>
+      </div>
+      <!-- Brand filter -->
+      <div class="f-wrap">
+        <div class="f-btn" id="fb-brand" onclick="toggleDropdown('dd-brand',this)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+          <span id="fl-brand">Brand: All</span>
+          <svg class="arr" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="10"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="f-dropdown" id="dd-brand" style="min-width:200px">
+          <input class="f-search" placeholder="Search brand..." oninput="filterOpts('dd-brand',this.value)"/>
+          <div class="f-option" onclick="selectFilter('brand','','Brand: All')"><div class="chk" id="chk-brand-">✓</div>All Brands</div>
+          <div class="f-option" onclick="selectFilter('brand','!Prof','!Prof')" id="fopt-brand-0"><div class="chk" id="chk-brand-0"></div>!Prof</div>
+          <div class="f-option" onclick="selectFilter('brand','A Design','A Design')" id="fopt-brand-1"><div class="chk" id="chk-brand-1"></div>A Design</div>
+          <div class="f-option" onclick="selectFilter('brand','ADH','ADH')" id="fopt-brand-2"><div class="chk" id="chk-brand-2"></div>ADH</div>
+          <div class="f-option" onclick="selectFilter('brand','AIDAILU','AIDAILU')" id="fopt-brand-3"><div class="chk" id="chk-brand-3"></div>AIDAILU</div>
+          <div class="f-option" onclick="selectFilter('brand','ARHANORY','ARHANORY')" id="fopt-brand-4"><div class="chk" id="chk-brand-4"></div>ARHANORY</div>
+          <div class="f-option" onclick="selectFilter('brand','ASHION','ASHION')" id="fopt-brand-5"><div class="chk" id="chk-brand-5"></div>ASHION</div>
+          <div class="f-option" onclick="selectFilter('brand','Acer','Acer')" id="fopt-brand-6"><div class="chk" id="chk-brand-6"></div>Acer</div>
+          <div class="f-option" onclick="selectFilter('brand','African soul','African soul')" id="fopt-brand-7"><div class="chk" id="chk-brand-7"></div>African soul</div>
+          <div class="f-option" onclick="selectFilter('brand','Aichun','Aichun')" id="fopt-brand-8"><div class="chk" id="chk-brand-8"></div>Aichun</div>
+          <div class="f-option" onclick="selectFilter('brand','Air','Air')" id="fopt-brand-9"><div class="chk" id="chk-brand-9"></div>Air</div>
+          <div class="f-option" onclick="selectFilter('brand','Aldeepo','Aldeepo')" id="fopt-brand-10"><div class="chk" id="chk-brand-10"></div>Aldeepo</div>
+          <div class="f-option" onclick="selectFilter('brand','Aliver','Aliver')" id="fopt-brand-11"><div class="chk" id="chk-brand-11"></div>Aliver</div>
+          <div class="f-option" onclick="selectFilter('brand','All star','All star')" id="fopt-brand-12"><div class="chk" id="chk-brand-12"></div>All star</div>
+          <div class="f-option" onclick="selectFilter('brand','Amara','Amara')" id="fopt-brand-13"><div class="chk" id="chk-brand-13"></div>Amara</div>
+          <div class="f-option" onclick="selectFilter('brand','Amaya','Amaya')" id="fopt-brand-14"><div class="chk" id="chk-brand-14"></div>Amaya</div>
+          <div class="f-option" onclick="selectFilter('brand','Amazing','Amazing')" id="fopt-brand-15"><div class="chk" id="chk-brand-15"></div>Amazing</div>
+          <div class="f-option" onclick="selectFilter('brand','Amlactin','Amlactin')" id="fopt-brand-16"><div class="chk" id="chk-brand-16"></div>Amlactin</div>
+          <div class="f-option" onclick="selectFilter('brand','Ampex','Ampex')" id="fopt-brand-17"><div class="chk" id="chk-brand-17"></div>Ampex</div>
+          <div class="f-option" onclick="selectFilter('brand','Android','Android')" id="fopt-brand-18"><div class="chk" id="chk-brand-18"></div>Android</div>
+          <div class="f-option" onclick="selectFilter('brand','Anker','Anker')" id="fopt-brand-19"><div class="chk" id="chk-brand-19"></div>Anker</div>
+          <div class="f-option" onclick="selectFilter('brand','BOMGE','BOMGE')" id="fopt-brand-20"><div class="chk" id="chk-brand-20"></div>BOMGE</div>
+          <div class="f-option" onclick="selectFilter('brand','Banagat','Banagat')" id="fopt-brand-21"><div class="chk" id="chk-brand-21"></div>Banagat</div>
+          <div class="f-option" onclick="selectFilter('brand','Bedtime Originals','Bedtime Originals')" id="fopt-brand-22"><div class="chk" id="chk-brand-22"></div>Bedtime Originals</div>
+          <div class="f-option" onclick="selectFilter('brand','Bekia','Bekia')" id="fopt-brand-23"><div class="chk" id="chk-brand-23"></div>Bekia</div>
+          <div class="f-option" onclick="selectFilter('brand','Berry','Berry')" id="fopt-brand-24"><div class="chk" id="chk-brand-24"></div>Berry</div>
+          <div class="f-option" onclick="selectFilter('brand','Berrykey','Berrykey')" id="fopt-brand-25"><div class="chk" id="chk-brand-25"></div>Berrykey</div>
+          <div class="f-option" onclick="selectFilter('brand','Biden','Biden')" id="fopt-brand-26"><div class="chk" id="chk-brand-26"></div>Biden</div>
+          <div class="f-option" onclick="selectFilter('brand','Blueflame','Blueflame')" id="fopt-brand-27"><div class="chk" id="chk-brand-27"></div>Blueflame</div>
+          <div class="f-option" onclick="selectFilter('brand','BoomBest','BoomBest')" id="fopt-brand-28"><div class="chk" id="chk-brand-28"></div>BoomBest</div>
+          <div class="f-option" onclick="selectFilter('brand','Bravo','Bravo')" id="fopt-brand-29"><div class="chk" id="chk-brand-29"></div>Bravo</div>
+          <div class="f-option" onclick="selectFilter('brand','Bro Toumi','Bro Toumi')" id="fopt-brand-30"><div class="chk" id="chk-brand-30"></div>Bro Toumi</div>
+          <div class="f-option" onclick="selectFilter('brand','C Idea','C Idea')" id="fopt-brand-31"><div class="chk" id="chk-brand-31"></div>C Idea</div>
+          <div class="f-option" onclick="selectFilter('brand','CYFAZA','CYFAZA')" id="fopt-brand-32"><div class="chk" id="chk-brand-32"></div>CYFAZA</div>
+          <div class="f-option" onclick="selectFilter('brand','Catherine','Catherine')" id="fopt-brand-33"><div class="chk" id="chk-brand-33"></div>Catherine</div>
+          <div class="f-option" onclick="selectFilter('brand','Cctv','Cctv')" id="fopt-brand-34"><div class="chk" id="chk-brand-34"></div>Cctv</div>
+          <div class="f-option" onclick="selectFilter('brand','Chiq','Chiq')" id="fopt-brand-35"><div class="chk" id="chk-brand-35"></div>Chiq</div>
+          <div class="f-option" onclick="selectFilter('brand','Classic','Classic')" id="fopt-brand-36"><div class="chk" id="chk-brand-36"></div>Classic</div>
+          <div class="f-option" onclick="selectFilter('brand','Colorful','Colorful')" id="fopt-brand-37"><div class="chk" id="chk-brand-37"></div>Colorful</div>
+          <div class="f-option" onclick="selectFilter('brand','Conexlab','Conexlab')" id="fopt-brand-38"><div class="chk" id="chk-brand-38"></div>Conexlab</div>
+          <div class="f-option" onclick="selectFilter('brand','Cosmo','Cosmo')" id="fopt-brand-39"><div class="chk" id="chk-brand-39"></div>Cosmo</div>
+          <div class="f-option" onclick="selectFilter('brand','Cotton','Cotton')" id="fopt-brand-40"><div class="chk" id="chk-brand-40"></div>Cotton</div>
+          <div class="f-option" onclick="selectFilter('brand','Couronne','Couronne')" id="fopt-brand-41"><div class="chk" id="chk-brand-41"></div>Couronne</div>
+          <div class="f-option" onclick="selectFilter('brand','Cover','Cover')" id="fopt-brand-42"><div class="chk" id="chk-brand-42"></div>Cover</div>
+          <div class="f-option" onclick="selectFilter('brand','Cream','Cream')" id="fopt-brand-43"><div class="chk" id="chk-brand-43"></div>Cream</div>
+          <div class="f-option" onclick="selectFilter('brand','DELL','DELL')" id="fopt-brand-44"><div class="chk" id="chk-brand-44"></div>DELL</div>
+          <div class="f-option" onclick="selectFilter('brand','DR Rashel','DR Rashel')" id="fopt-brand-45"><div class="chk" id="chk-brand-45"></div>DR Rashel</div>
+          <div class="f-option" onclick="selectFilter('brand','David','David')" id="fopt-brand-46"><div class="chk" id="chk-brand-46"></div>David</div>
+          <div class="f-option" onclick="selectFilter('brand','Digiwave','Digiwave')" id="fopt-brand-47"><div class="chk" id="chk-brand-47"></div>Digiwave</div>
+          <div class="f-option" onclick="selectFilter('brand','Djack','Djack')" id="fopt-brand-48"><div class="chk" id="chk-brand-48"></div>Djack</div>
+          <div class="f-option" onclick="selectFilter('brand','Dove','Dove')" id="fopt-brand-49"><div class="chk" id="chk-brand-49"></div>Dove</div>
+          <div class="f-option" onclick="selectFilter('brand','Dvd','Dvd')" id="fopt-brand-50"><div class="chk" id="chk-brand-50"></div>Dvd</div>
+          <div class="f-option" onclick="selectFilter('brand','EAGEAT','EAGEAT')" id="fopt-brand-51"><div class="chk" id="chk-brand-51"></div>EAGEAT</div>
+          <div class="f-option" onclick="selectFilter('brand','EASYPIE','EASYPIE')" id="fopt-brand-52"><div class="chk" id="chk-brand-52"></div>EASYPIE</div>
+          <div class="f-option" onclick="selectFilter('brand','EQQUAL BERRY','EQQUAL BERRY')" id="fopt-brand-53"><div class="chk" id="chk-brand-53"></div>EQQUAL BERRY</div>
+          <div class="f-option" onclick="selectFilter('brand','East Choose','East Choose')" id="fopt-brand-54"><div class="chk" id="chk-brand-54"></div>East Choose</div>
+          <div class="f-option" onclick="selectFilter('brand','Electro Master','Electro Master')" id="fopt-brand-55"><div class="chk" id="chk-brand-55"></div>Electro Master</div>
+          <div class="f-option" onclick="selectFilter('brand','FOSSiBOT','FOSSiBOT')" id="fopt-brand-56"><div class="chk" id="chk-brand-56"></div>FOSSiBOT</div>
+          <div class="f-option" onclick="selectFilter('brand','FUXING FASHION','FUXING FASHION')" id="fopt-brand-57"><div class="chk" id="chk-brand-57"></div>FUXING FASHION</div>
+          <div class="f-option" onclick="selectFilter('brand','Fashion','Fashion')" id="fopt-brand-58"><div class="chk" id="chk-brand-58"></div>Fashion</div>
+          <div class="f-option" onclick="selectFilter('brand','Fashion Collection','Fashion Collection')" id="fopt-brand-59"><div class="chk" id="chk-brand-59"></div>Fashion Collection</div>
+          <div class="f-option" onclick="selectFilter('brand','Flame','Flame')" id="fopt-brand-60"><div class="chk" id="chk-brand-60"></div>Flame</div>
+          <div class="f-option" onclick="selectFilter('brand','Flat Tummy Tea','Flat Tummy Tea')" id="fopt-brand-61"><div class="chk" id="chk-brand-61"></div>Flat Tummy Tea</div>
+          <div class="f-option" onclick="selectFilter('brand','Focustar','Focustar')" id="fopt-brand-62"><div class="chk" id="chk-brand-62"></div>Focustar</div>
+          <div class="f-option" onclick="selectFilter('brand','Fragrance World','Fragrance World')" id="fopt-brand-63"><div class="chk" id="chk-brand-63"></div>Fragrance World</div>
+          <div class="f-option" onclick="selectFilter('brand','GALUIN','GALUIN')" id="fopt-brand-64"><div class="chk" id="chk-brand-64"></div>GALUIN</div>
+          <div class="f-option" onclick="selectFilter('brand','GL-General','GL-General')" id="fopt-brand-65"><div class="chk" id="chk-brand-65"></div>GL-General</div>
+          <div class="f-option" onclick="selectFilter('brand','GUEETON','GUEETON')" id="fopt-brand-66"><div class="chk" id="chk-brand-66"></div>GUEETON</div>
+          <div class="f-option" onclick="selectFilter('brand','Geemy','Geemy')" id="fopt-brand-67"><div class="chk" id="chk-brand-67"></div>Geemy</div>
+          <div class="f-option" onclick="selectFilter('brand','Genera','Genera')" id="fopt-brand-68"><div class="chk" id="chk-brand-68"></div>Genera</div>
+          <div class="f-option" onclick="selectFilter('brand','General','General')" id="fopt-brand-69"><div class="chk" id="chk-brand-69"></div>General</div>
+          <div class="f-option" onclick="selectFilter('brand','Generic','Generic')" id="fopt-brand-70"><div class="chk" id="chk-brand-70"></div>Generic</div>
+          <div class="f-option" onclick="selectFilter('brand','Generic Xim','Generic Xim')" id="fopt-brand-71"><div class="chk" id="chk-brand-71"></div>Generic Xim</div>
+          <div class="f-option" onclick="selectFilter('brand','Generix','Generix')" id="fopt-brand-72"><div class="chk" id="chk-brand-72"></div>Generix</div>
+          <div class="f-option" onclick="selectFilter('brand','Genetic','Genetic')" id="fopt-brand-73"><div class="chk" id="chk-brand-73"></div>Genetic</div>
+          <div class="f-option" onclick="selectFilter('brand','Genuine','Genuine')" id="fopt-brand-74"><div class="chk" id="chk-brand-74"></div>Genuine</div>
+          <div class="f-option" onclick="selectFilter('brand','Gerber','Gerber')" id="fopt-brand-75"><div class="chk" id="chk-brand-75"></div>Gerber</div>
+          <div class="f-option" onclick="selectFilter('brand','Glass','Glass')" id="fopt-brand-76"><div class="chk" id="chk-brand-76"></div>Glass</div>
+          <div class="f-option" onclick="selectFilter('brand','Global Star','Global Star')" id="fopt-brand-77"><div class="chk" id="chk-brand-77"></div>Global Star</div>
+          <div class="f-option" onclick="selectFilter('brand','Gm','Gm')" id="fopt-brand-78"><div class="chk" id="chk-brand-78"></div>Gm</div>
+          <div class="f-option" onclick="selectFilter('brand','Google','Google')" id="fopt-brand-79"><div class="chk" id="chk-brand-79"></div>Google</div>
+        </div>
+      </div>
+      <div class="reset-btn" onclick="resetFilters()">✕ Reset</div>
+    </div>
+  </div>
+
+  <!-- ACTIVE FILTER PILLS -->
+  <div class="active-pills" id="active-pills"></div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar" id="stats-bar">
+    <span class="sb">Filtered:</span>
+    <span><span class="sv" id="sb-count">—</span> returns</span>
+    <span class="sb">·</span>
+    <span><span class="sv" id="sb-cost">—</span> COGP</span>
+    <span class="sb">·</span>
+    <span><span class="sv" id="sb-vendors">—</span> vendors</span>
+    <span class="sb">·</span>
+    <span><span class="sv" id="sb-brands">—</span> brands</span>
+  </div>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <div id="page-overview" class="page active">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-accent" style="background:linear-gradient(90deg,#f97316,#fb923c)"></div><div class="kpi-glow" style="background:#f97316"></div><div class="kpi-label" style="color:#f97316">Total Returns</div><div class="kpi-value" style="color:#f97316" id="kv-returns">3,469</div><div class="kpi-change" id="kc-returns">All Pending Review</div></div>
+      <div class="kpi-card"><div class="kpi-accent" style="background:linear-gradient(90deg,#06b6d4,#67e8f9)"></div><div class="kpi-glow" style="background:#06b6d4"></div><div class="kpi-label" style="color:#06b6d4">Total Vendors</div><div class="kpi-value" style="color:#06b6d4" id="kv-vendors">247</div><div class="kpi-change">Unique active</div></div>
+      <div class="kpi-card"><div class="kpi-accent" style="background:linear-gradient(90deg,#a855f7,#c084fc)"></div><div class="kpi-glow" style="background:#a855f7"></div><div class="kpi-label" style="color:#a855f7">Total Brands</div><div class="kpi-value" style="color:#a855f7" id="kv-brands">189</div><div class="kpi-change">Unique brands</div></div>
+      <div class="kpi-card"><div class="kpi-accent" style="background:linear-gradient(90deg,#22c55e,#4ade80)"></div><div class="kpi-glow" style="background:#22c55e"></div><div class="kpi-label" style="color:#22c55e">Total COGP (USD)</div><div class="kpi-value" style="color:#22c55e" id="kv-cogp">$68,950</div><div class="kpi-change" id="kc-cogp">Total value</div></div>
+      <div class="kpi-card"><div class="kpi-accent" style="background:linear-gradient(90deg,#eab308,#fde047)"></div><div class="kpi-glow" style="background:#eab308"></div><div class="kpi-label" style="color:#eab308">Avg Age (Days)</div><div class="kpi-value" style="color:#eab308" id="kv-age">88.3</div><div class="kpi-change">All returns</div></div>
+      <div class="kpi-card"><div class="kpi-accent" style="background:linear-gradient(90deg,#f43f5e,#fb7185)"></div><div class="kpi-glow" style="background:#f43f5e"></div><div class="kpi-label" style="color:#f43f5e">SC Verdicts</div><div class="kpi-value" style="color:#f43f5e" id="kv-verdicts">235</div><div class="kpi-change" id="kc-verdicts">6.8% of returns</div></div>
+    </div>
+
+    <div class="row r3">
+      <div class="card">
+        <div class="card-title">Supplier Return Reasons <span class="pill2" style="background:var(--c1b);color:var(--c1)" id="sup-count-pill">3,469</span></div>
+        <div class="donut-wrap">
+          <canvas id="c-sup" width="80" height="80"></canvas>
+          <div style="width:100%">
+            <div class="legend-row"><span class="legend-dot" style="background:#f97316"></span><span class="legend-name">MPDS Failed Delivery</span><span class="legend-num" id="l-mpds">1,755<span class="legend-pct"> 50.6%</span></span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#06b6d4"></span><span class="legend-name">Return from Customer</span><span class="legend-num" id="l-rfc">1,412<span class="legend-pct"> 40.7%</span></span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#a855f7"></span><span class="legend-name">Replacement</span><span class="legend-num" id="l-rep">302<span class="legend-pct"> 8.7%</span></span></div>
+            <div class="legend-total"><span>Total</span><span id="l-sup-total">3,469</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Returns Aging <span class="sub">count by bucket</span></div>
+        <canvas id="c-aging-ov" height="110"></canvas>
+        <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px" id="aging-bk-grid">
+          <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:11px;color:#22c55e;font-weight:600">✅ 0–7 Days</span>
+            <span style="font-size:16px;font-weight:800;color:#fff" id="bk-ov-0">1,312</span>
+          </div>
+          <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:11px;color:#06b6d4;font-weight:600">🔵 7–14 Days</span>
+            <span style="font-size:16px;font-weight:800;color:#fff" id="bk-ov-1">402</span>
+          </div>
+          <div style="background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:11px;color:#eab308;font-weight:600">⚠️ 14–21 Days</span>
+            <span style="font-size:16px;font-weight:800;color:#fff" id="bk-ov-2">111</span>
+          </div>
+          <div style="background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.5);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 12px rgba(244,63,94,.2)">
+            <span style="font-size:11px;color:#f43f5e;font-weight:700">🔴 21+ HIGH RISK</span>
+            <span style="font-size:16px;font-weight:800;color:#f43f5e" id="bk-ov-3">1,644</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Customer Return Reasons <span class="pill2" style="background:var(--c3b);color:var(--c3)" id="cust-count-pill">1,047</span></div>
+        <div class="donut-wrap">
+          <canvas id="c-cust" width="80" height="80"></canvas>
+          <div style="width:100%">
+            <div class="legend-row"><span class="legend-dot" style="background:#f97316"></span><span class="legend-name">Broken/Defective</span><span class="legend-num" id="l-cr1">313</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#06b6d4"></span><span class="legend-name">Fake/Unauthentic</span><span class="legend-num" id="l-cr2">227</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#a855f7"></span><span class="legend-name">Wrong Item</span><span class="legend-num" id="l-cr3">174</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#22c55e"></span><span class="legend-name">Stopped Working</span><span class="legend-num" id="l-cr4">156</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#f43f5e"></span><span class="legend-name">Missing Parts</span><span class="legend-num" id="l-cr5">75</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#eab308"></span><span class="legend-name">Other</span><span class="legend-num" id="l-cr6">102</span></div>
+            <div class="legend-total"><span>Total</span><span id="l-cust-total">1,047</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row r4">
+      <div class="card"><div class="card-title">Top Vendors <span class="sub">by Count</span></div><canvas id="c-vc" height="195"></canvas></div>
+      <div class="card"><div class="card-title">Top Vendors <span class="sub">COGP (USD)</span></div><canvas id="c-vusd" height="195"></canvas></div>
+      <div class="card"><div class="card-title">Top Brands <span class="sub">by Count</span></div><canvas id="c-bc" height="195"></canvas></div>
+      <div class="card">
+        <div class="card-title" style="color:var(--c3)">📦 Top SKUs <span class="sub" id="sku-sub">1–10 / 1,250+</span></div>
+        <div class="tbl-wrap" style="max-height:none">
+          <table><thead><tr><th style="font-size:11px">SKU ID</th><th style="font-size:11px">Count</th><th style="font-size:11px">COGP</th></tr></thead>
+          <tbody id="sku-tbody"></tbody></table>
+        </div>
+        <div class="pag"><span id="sku-pag-info">—</span><div class="pag-btns"><button class="pag-btn" onclick="skuPage(-1)">‹</button><button class="pag-btn" onclick="skuPage(1)">›</button></div></div>
+      </div>
+    </div>
+
+    <div class="row r3b">
+      <div class="card"><div class="card-title">COGP Weekly Trend <span class="sub">2025–2026</span></div><canvas id="c-trend" height="145"></canvas></div>
+      <div class="card">
+        <div class="card-title">SC Verdict Breakdown</div>
+        <div id="verdict-bars" style="margin-bottom:10px"></div>
+        <div class="card-title" style="margin-top:10px">PO Type</div>
+        <canvas id="c-po" height="75"></canvas>
+      </div>
+      <div class="card" style="border-color:rgba(6,182,212,.25)">
+        <div class="card-title" style="color:var(--c2)">🏆 KAM Leaderboard <span class="pill2" style="background:var(--c2b);color:var(--c2)">Live</span></div>
+        <div class="tbl-wrap" style="max-height:none"><table>
+          <thead><tr><th style="font-size:11px">#</th><th style="font-size:11px">KAM Name</th><th style="font-size:11px">Returns</th><th style="font-size:11px">COGP (USD)</th></tr></thead>
+          <tbody id="kam-lb-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ AGING ═══ -->
+  <div id="page-aging" class="page">
+    <div style="margin-bottom:14px">
+      <h2 style="font-family:Space Grotesk,sans-serif;font-size:17px;font-weight:800">⏱️ Aging Analysis</h2>
+      <p style="font-size:12px;color:var(--text2);margin-top:3px">Returns breakdown by how long they have been unresolved — 21+ days is High Risk</p>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+      <div class="kpi-card" style="border-color:rgba(34,197,94,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#22c55e,#4ade80)"></div>
+        <div class="kpi-glow" style="background:#22c55e"></div>
+        <div class="kpi-label" style="color:#22c55e">✅ 0–7 Days</div>
+        <div class="kpi-value" style="color:#22c55e" id="ag-0">1,312</div>
+        <div class="kpi-change" id="ag-0c" style="color:var(--text2)">$25,631 COGP</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(6,182,212,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#06b6d4,#67e8f9)"></div>
+        <div class="kpi-glow" style="background:#06b6d4"></div>
+        <div class="kpi-label" style="color:#06b6d4">🔵 7–14 Days</div>
+        <div class="kpi-value" style="color:#06b6d4" id="ag-1">402</div>
+        <div class="kpi-change" id="ag-1c" style="color:var(--text2)">$13,574 COGP</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(234,179,8,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#eab308,#fde047)"></div>
+        <div class="kpi-glow" style="background:#eab308"></div>
+        <div class="kpi-label" style="color:#eab308">⚠️ 14–21 Days</div>
+        <div class="kpi-value" style="color:#eab308" id="ag-2">111</div>
+        <div class="kpi-change" id="ag-2c" style="color:var(--text2)">$2,417 COGP</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(244,63,94,.5);box-shadow:0 0 20px rgba(244,63,94,.2)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#f43f5e,#fb7185)"></div>
+        <div class="kpi-glow" style="background:#f43f5e"></div>
+        <div class="kpi-label" style="color:#f43f5e">🔴 21+ Days — HIGH RISK</div>
+        <div class="kpi-value" style="color:#f43f5e" id="ag-3">1,644</div>
+        <div class="kpi-change" id="ag-3c" style="color:#f43f5e">$27,329 COGP</div>
+      </div>
+    </div>
+
+    <!-- MAIN BAR CHART: Returns per bucket -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title" style="font-size:12px;margin-bottom:14px">
+        Returns Count per Age Bucket
+        <span class="sub">full bar view with values</span>
+      </div>
+      <canvas id="c-ag-main" height="160"></canvas>
+    </div>
+
+    <!-- TWO CHARTS ROW -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="card">
+        <div class="card-title" style="font-size:12px">COGP (USD) per Age Bucket</div>
+        <canvas id="c-ag-cost" height="170"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">KAM Age Distribution <span class="sub">stacked buckets</span></div>
+        <canvas id="c-kam-age" height="170"></canvas>
+      </div>
+    </div>
+
+    <!-- RISK TABLE + INSIGHTS ROW -->
+    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px">
+      <div class="card">
+        <div class="card-title" style="font-size:12px">Aging Risk Summary Table</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Age Bucket</th>
+                <th>Count</th>
+                <th>% of Total</th>
+                <th>COGP (USD)</th>
+                <th>Avg Age</th>
+                <th>Risk Level</th>
+              </tr>
+            </thead>
+            <tbody id="aging-risk-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">Key Insights</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px" id="aging-insights">
+          <div style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.25);border-radius:9px;padding:12px 14px">
+            <div style="font-size:12px;color:#f43f5e;font-weight:700;margin-bottom:4px">🔴 High Risk (21+ days)</div>
+            <div style="font-size:13px;color:var(--text);font-weight:600" id="ins-highrisk">1,644 returns · $27,329 COGP</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Needs immediate resolution</div>
+          </div>
+          <div style="background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);border-radius:9px;padding:12px 14px">
+            <div style="font-size:12px;color:#eab308;font-weight:700;margin-bottom:4px">⚠️ Watch Zone (14–21 days)</div>
+            <div style="font-size:13px;color:var(--text);font-weight:600" id="ins-watch">111 returns · $2,417 COGP</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Escalating — act before 21 days</div>
+          </div>
+          <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:9px;padding:12px 14px">
+            <div style="font-size:12px;color:#22c55e;font-weight:700;margin-bottom:4px">✅ On Track (0–7 days)</div>
+            <div style="font-size:13px;color:var(--text);font-weight:600" id="ins-good">1,312 returns · $25,631 COGP</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Within acceptable resolution window</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VENDOR ═══ -->
+  <div id="page-vendor" class="page">
+    <div style="margin-bottom:13px"><h2 style="font-family:Space Grotesk,sans-serif;font-size:16px;font-weight:800">🏪 Vendor Performance</h2><p style="font-size:11px;color:var(--text3);margin-top:2px">Return volumes, COGP, and reasons by vendor</p></div>
+    <div class="row r2">
+      <div class="card"><div class="card-title">Top Vendors <span class="sub">by Count</span></div><canvas id="c-vend-f1" height="230"></canvas></div>
+      <div class="card"><div class="card-title">Top Vendors <span class="sub">COGP (USD)</span></div><canvas id="c-vend-f2" height="230"></canvas></div>
+    </div>
+    <div class="card" style="margin-bottom:11px">
+      <div class="card-title">Vendor Detail <span class="sub" id="vt-count">All vendors</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>#</th><th>Vendor</th><th>Returns</th><th>COGP</th><th>Brands</th><th>Top Reason</th><th>$/Return</th></tr></thead>
+        <tbody id="vt"></tbody>
+      </table></div>
+    </div>
+    <div class="row r2">
+      <div class="card"><div class="card-title">Return Reason Mix <span class="sub">Top vendors stacked</span></div><canvas id="c-vend-mix" height="160"></canvas></div>
+      <div class="card">
+        <div class="card-title">PO Type Split</div>
+        <div class="donut-wrap" style="margin-top:8px">
+          <canvas id="c-po2" width="100" height="100" style="flex-shrink:0"></canvas>
+          <div style="flex:1">
+            <div class="legend-row"><span class="legend-dot" style="background:#f97316"></span><span class="legend-name">Marketplace</span><span class="legend-num" id="po-mp">3,403</span></div>
+            <div class="legend-row"><span class="legend-dot" style="background:#06b6d4"></span><span class="legend-name">Outright</span><span class="legend-num" id="po-out">66</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BRAND ═══ -->
+  <div id="page-brand" class="page">
+    <div style="margin-bottom:13px"><h2 style="font-family:Space Grotesk,sans-serif;font-size:16px;font-weight:800">🏷️ Brand Analysis</h2><p style="font-size:11px;color:var(--text3);margin-top:2px">Return volumes and financial impact by brand</p></div>
+    <div class="row r2">
+      <div class="card"><div class="card-title">Top Brands <span class="sub">by Count</span></div><canvas id="c-br-cnt" height="230"></canvas></div>
+      <div class="card"><div class="card-title">Top Brands <span class="sub">COGP (USD)</span></div><canvas id="c-br-usd" height="230"></canvas></div>
+    </div>
+    <div class="card" style="margin-bottom:11px">
+      <div class="card-title">Brand Detail <span class="sub" id="bt-count">All brands</span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>#</th><th>Brand</th><th>Returns</th><th>COGP</th><th>$/Return</th><th>Vendors</th><th>Top Reason</th></tr></thead>
+        <tbody id="bt"></tbody>
+      </table></div>
+    </div>
+    <div class="row r2">
+      <div class="card"><div class="card-title">Count vs Cost Bubble <span class="sub">size = vendor count</span></div><canvas id="c-bubble" height="190"></canvas></div>
+      <div class="card">
+        <div class="card-title">Brand Insights</div>
+        <div id="brand-insights" style="font-size:11px;color:var(--text2);line-height:2.1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ KAM ═══ -->
+  <div id="page-kam" class="page">
+    <div style="margin-bottom:13px"><h2 style="font-family:Space Grotesk,sans-serif;font-size:16px;font-weight:800">👤 KAM Performance</h2><p style="font-size:11px;color:var(--text3);margin-top:2px">Ownership, volumes, costs, aging & efficiency</p></div>
+    <div class="row r2">
+      <div class="card"><div class="card-title">KAM Return Count</div><canvas id="c-kam-cnt" height="215"></canvas></div>
+      <div class="card"><div class="card-title">KAM COGP (USD)</div><canvas id="c-kam-usd" height="215"></canvas></div>
+    </div>
+    <div class="row r2">
+      <div class="card"><div class="card-title">KAM Age Distribution <span class="sub">Stacked</span></div><canvas id="c-kam-age2" height="195"></canvas></div>
+      <div class="card">
+        <div class="card-title">KAM Detail Table</div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>#</th><th>KAM</th><th>Ret.</th><th>COGP</th><th>Vendors</th><th>Brands</th></tr></thead>
+          <tbody id="kt"></tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Cost Efficiency <span class="sub">COGP per return — lower is better</span></div>
+      <div id="kam-eff" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ═══ RETURN REASONS ═══ -->
+  <div id="page-reasons" class="page">
+    <div style="margin-bottom:14px">
+      <h2 style="font-family:Space Grotesk,sans-serif;font-size:17px;font-weight:800">❓ Return Reasons</h2>
+      <p style="font-size:12px;color:var(--text2);margin-top:3px">Supplier, customer & aftersales reasons — cost impact and KAM breakdown</p>
+    </div>
+
+    <!-- KPI ROW -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+      <div class="kpi-card" style="border-color:rgba(6,182,212,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#06b6d4,#67e8f9)"></div>
+        <div class="kpi-glow" style="background:#06b6d4"></div>
+        <div class="kpi-label" style="color:#06b6d4">MPDS Failed Delivery</div>
+        <div class="kpi-value" style="color:#06b6d4" id="rr-mpds">1,755</div>
+        <div class="kpi-change" style="color:var(--text2)">$13,544 COGP</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(249,115,22,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#f97316,#fb923c)"></div>
+        <div class="kpi-glow" style="background:#f97316"></div>
+        <div class="kpi-label" style="color:#f97316">Return from Customer</div>
+        <div class="kpi-value" style="color:#f97316" id="rr-rfc">1,412</div>
+        <div class="kpi-change" style="color:var(--text2)">$44,765 COGP</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(168,85,247,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#a855f7,#c084fc)"></div>
+        <div class="kpi-glow" style="background:#a855f7"></div>
+        <div class="kpi-label" style="color:#a855f7">Replacement</div>
+        <div class="kpi-value" style="color:#a855f7" id="rr-rep">302</div>
+        <div class="kpi-change" style="color:var(--text2)">$10,641 COGP</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(234,179,8,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#eab308,#fde047)"></div>
+        <div class="kpi-glow" style="background:#eab308"></div>
+        <div class="kpi-label" style="color:#eab308">CR with Aftersales Match</div>
+        <div class="kpi-value" style="color:#eab308">218</div>
+        <div class="kpi-change" style="color:var(--text2)">19.7% match rate</div>
+      </div>
+    </div>
+
+    <!-- ROW 1: Supplier Reasons + Customer Reasons -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="card">
+        <div class="card-title" style="font-size:12px">Supplier Return Reasons <span class="sub">count + cost</span></div>
+        <canvas id="c-rr-sup" height="160"></canvas>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
+          <div style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:#06b6d4;font-weight:700;margin-bottom:4px">MPDS Failed</div>
+            <div style="font-size:18px;font-weight:800;color:#fff" id="rr-s1-cnt">1,755</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px" id="rr-s1-usd">$13,544</div>
+          </div>
+          <div style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:#f97316;font-weight:700;margin-bottom:4px">From Customer</div>
+            <div style="font-size:18px;font-weight:800;color:#fff" id="rr-s2-cnt">1,412</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px" id="rr-s2-usd">$44,765</div>
+          </div>
+          <div style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:#a855f7;font-weight:700;margin-bottom:4px">Replacement</div>
+            <div style="font-size:18px;font-weight:800;color:#fff" id="rr-s3-cnt">302</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px" id="rr-s3-usd">$10,641</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">Customer Return Reasons <span class="sub">top 9 codes</span></div>
+        <canvas id="c-rr-cust" height="215"></canvas>
+      </div>
+    </div>
+
+    <!-- ROW 2: Aftersales Reasons + KAM by Reason stacked -->
+    <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:12px">
+      <div class="card">
+        <div class="card-title" style="font-size:12px">Aftersales Reasons <span class="sub">diagnosed cases</span></div>
+        <canvas id="c-rr-af" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">KAM by Supplier Return Reason <span class="sub">stacked</span></div>
+        <canvas id="c-rr-kam" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- ROW 3: Cost by reason + SC Verdict by reason -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="card">
+        <div class="card-title" style="font-size:12px">COGP (USD) by Supplier Reason</div>
+        <canvas id="c-rr-cost" height="160"></canvas>
+        <div style="margin-top:12px;font-size:12px;color:var(--text2);line-height:2">
+          💰 <strong style="color:#f97316">Return from Customer</strong> drives the most cost at <strong style="color:#fff">$44,765</strong><br>
+          📦 <strong style="color:#06b6d4">MPDS Failed Delivery</strong> is highest in volume (1,755) but lower per-unit cost<br>
+          🔁 <strong style="color:#a855f7">Replacements</strong> average <strong style="color:#fff">$35.2/unit</strong> — vendor quality issue
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">SC Verdict Breakdown <span class="sub">by verdict type</span></div>
+        <canvas id="c-rr-verdict" height="120"></canvas>
+        <div style="margin-top:14px">
+          <div class="card-title" style="font-size:11px;margin-bottom:10px">Top Brands per Supplier Reason</div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Supplier Reason</th><th>Top Brand</th><th>Count</th></tr></thead>
+            <tbody>
+              <tr><td>MPDS Failed</td><td style="color:#06b6d4">Generic</td><td style="color:#fff;font-weight:700">1,058</td></tr>
+              <tr><td>From Customer</td><td style="color:#f97316">Generic</td><td style="color:#fff;font-weight:700">501</td></tr>
+              <tr><td>Replacement</td><td style="color:#a855f7">Hoffmans</td><td style="color:#fff;font-weight:700">42</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Full customer reason table -->
+    <div class="card">
+      <div class="card-title" style="font-size:12px">Full Customer Return Reason Breakdown <span class="sub">all codes with count, cost & verdict</span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Customer Reason Code</th><th>Count</th><th>% of CR</th><th>COGP (USD)</th></tr></thead>
+          <tbody id="rr-full-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DETAILED DATA ═══ -->
+  <div id="page-detail" class="page">
+    <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <h2 style="font-family:Space Grotesk,sans-serif;font-size:17px;font-weight:800">📋 Detailed Data</h2>
+        <p style="font-size:12px;color:var(--text2);margin-top:3px">Full returns dataset — search, filter & export</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="position:relative">
+          <input id="dt-search" type="text" placeholder="🔍  Search vendor, brand, KAM, SKU..." 
+            style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--text);width:300px;outline:none;font-family:DM Sans,sans-serif"
+            oninput="dtSearch(this.value)" onfocus="this.style.borderColor='#06b6d4'" onblur="this.style.borderColor='var(--border2)'"/>
+        </div>
+        <button onclick="exportCSV()" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;color:#22c55e;cursor:pointer;font-family:DM Sans,sans-serif;transition:all .2s" onmouseover="this.style.background='#22c55e';this.style.color='#000'" onmouseout="this.style.background='rgba(34,197,94,.15)';this.style.color='#22c55e'">⬇ Export CSV</button>
+        <span style="font-size:12px;color:var(--text2)" id="dt-count-label">Showing all 3,469 records</span>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="tbl-wrap" style="max-height:600px;overflow-y:auto">
+        <table id="dt-table">
+          <thead>
+            <tr>
+              <th onclick="dtSort('k')" style="cursor:pointer;white-space:nowrap">KAM ↕</th>
+              <th onclick="dtSort('v')" style="cursor:pointer;white-space:nowrap">Vendor ↕</th>
+              <th onclick="dtSort('b')" style="cursor:pointer;white-space:nowrap">Brand ↕</th>
+              <th>SKU</th>
+              <th onclick="dtSort('sr')" style="cursor:pointer;white-space:nowrap">Supplier Reason ↕</th>
+              <th onclick="dtSort('a')" style="cursor:pointer;white-space:nowrap">Age (Days) ↕</th>
+              <th onclick="dtSort('u')" style="cursor:pointer;white-space:nowrap">COGP (USD) ↕</th>
+              <th>SC Verdict</th>
+              <th>Age Risk</th>
+            </tr>
+          </thead>
+          <tbody id="dt-tbody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border);flex-wrap:wrap;gap:8px">
+        <span style="font-size:12px;color:var(--text2)" id="dt-pag-info">Page 1 of —</span>
+        <div style="display:flex;gap:6px">
+          <button class="pag-btn" onclick="dtPage(-1)">‹ Prev</button>
+          <button class="pag-btn" onclick="dtPage(1)">Next ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══ FINANCIAL IMPACT ═══ -->
+  <div id="page-financial" class="page">
+    <div style="margin-bottom:14px">
+      <h2 style="font-family:Space Grotesk,sans-serif;font-size:17px;font-weight:800">💰 Financial Impact</h2>
+      <p style="font-size:12px;color:var(--text2);margin-top:3px">COGP exposure, cost per return, and financial risk by vendor, brand & KAM</p>
+    </div>
+
+    <!-- KPI ROW -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+      <div class="kpi-card" style="border-color:rgba(34,197,94,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#22c55e,#4ade80)"></div>
+        <div class="kpi-glow" style="background:#22c55e"></div>
+        <div class="kpi-label" style="color:#22c55e">Total COGP (USD)</div>
+        <div class="kpi-value" style="color:#22c55e" id="fi-total">$68,950</div>
+        <div class="kpi-change" style="color:var(--text2)">Across all returns</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(249,115,22,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#f97316,#fb923c)"></div>
+        <div class="kpi-glow" style="background:#f97316"></div>
+        <div class="kpi-label" style="color:#f97316">Avg Cost / Return</div>
+        <div class="kpi-value" style="color:#f97316" id="fi-avg">$19.9</div>
+        <div class="kpi-change" style="color:var(--text2)">Per return unit</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(244,63,94,.4);box-shadow:0 0 16px rgba(244,63,94,.15)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#f43f5e,#fb7185)"></div>
+        <div class="kpi-glow" style="background:#f43f5e"></div>
+        <div class="kpi-label" style="color:#f43f5e">High Risk COGP (21+d)</div>
+        <div class="kpi-value" style="color:#f43f5e" id="fi-risk">$27,329</div>
+        <div class="kpi-change" style="color:#f43f5e">39.6% of total COGP 🔴</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(6,182,212,.3)">
+        <div class="kpi-accent" style="background:linear-gradient(90deg,#06b6d4,#67e8f9)"></div>
+        <div class="kpi-glow" style="background:#06b6d4"></div>
+        <div class="kpi-label" style="color:#06b6d4">Highest Cost Vendor</div>
+        <div class="kpi-value" style="color:#06b6d4;font-size:16px" id="fi-top-vendor">Online shop.</div>
+        <div class="kpi-change" style="color:var(--text2)" id="fi-top-vendor-usd">$9,178 COGP</div>
+      </div>
+    </div>
+
+    <!-- ROW 1: Cost by vendor + cost by brand -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="card">
+        <div class="card-title" style="font-size:12px">Top 12 Vendors <span class="sub">by COGP (USD)</span></div>
+        <canvas id="c-fi-vend" height="230"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">Top 12 Brands <span class="sub">by COGP (USD)</span></div>
+        <canvas id="c-fi-brand" height="230"></canvas>
+      </div>
+    </div>
+
+    <!-- ROW 2: Cost trend + KAM cost -->
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="card">
+        <div class="card-title" style="font-size:12px">COGP Weekly Trend <span class="sub">2025–2026 · USD</span></div>
+        <canvas id="c-fi-trend" height="165"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">KAM COGP Exposure <span class="sub">cost per return</span></div>
+        <canvas id="c-fi-kam" height="165"></canvas>
+      </div>
+    </div>
+
+    <!-- ROW 3: Cost by age bucket + cost by reason + financial table -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px">
+      <div class="card">
+        <div class="card-title" style="font-size:12px">COGP by Age Bucket <span class="sub">risk exposure</span></div>
+        <canvas id="c-fi-age" height="170"></canvas>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px" id="fi-age-tiles"></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">COGP by Return Reason</div>
+        <canvas id="c-fi-reason" height="170"></canvas>
+        <div style="margin-top:12px;font-size:11px;color:var(--text2);line-height:2">
+          💡 <strong style="color:#f97316">From Customer</strong> = highest cost exposure<br>
+          📦 <strong style="color:#06b6d4">MPDS</strong> = high volume, lower avg cost<br>
+          🔁 <strong style="color:#a855f7">Replacement</strong> = $35/unit avg
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:12px">Financial Risk Table <span class="sub">top 12 vendors</span></div>
+        <div class="tbl-wrap" style="max-height:280px">
+          <table>
+            <thead><tr><th>#</th><th>Vendor</th><th>Returns</th><th>COGP</th><th>$/Return</th><th>Risk</th></tr></thead>
+            <tbody id="fi-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /main -->
+
+<script>
+// ═══ FULL DATASET ═══
+const ALL_DATA = /*__DATA_START__*//*__DATA_END__*/;
+
+// ═══ PALETTE ═══
+const P = ['#f97316','#06b6d4','#a855f7','#22c55e','#f43f5e','#eab308','#3b82f6','#ec4899','#10b981','#f59e0b','#6366f1','#14b8a6','#fb923c','#67e8f9','#c084fc'];
+const gc = 'rgba(40,60,95,.6)';
+const lc = '#94afd4';
+Chart.defaults.color = lc;
+Chart.defaults.font.family = 'DM Sans';
+
+// ═══ FILTER STATE ═══
+let FIL = { kam: '', vendor: '', brand: '' };
+let filtered = [...ALL_DATA];
+let skuPageN = 0;
+
+// ═══ CHARTS REGISTRY ═══
+const CH = {};
+
+// ═══ FILTER LOGIC ═══
+function applyFilters() {
+  filtered = ALL_DATA.filter(r =>
+    (FIL.kam === '' || r.k === FIL.kam) &&
+    (FIL.vendor === '' || r.v === FIL.vendor) &&
+    (FIL.brand === '' || r.b === FIL.brand)
+  );
+  skuPageN = 0;
+  updateAll();
+}
+
+function selectFilter(type, value, label) {
+  FIL[type] = value;
+  // Update button label
+  document.getElementById('fl-' + type).textContent = value ? label : type.charAt(0).toUpperCase() + type.slice(1) + ': All';
+  // Active state on button
+  const btn = document.getElementById('fb-' + type);
+  btn.classList.toggle('active-filter', value !== '');
+  // Close dropdown
+  closeAllDropdowns();
+  applyFilters();
+  updatePills();
+  updateStatsBar();
+}
+
+function updatePills() {
+  const container = document.getElementById('active-pills');
+  let html = '';
+  if (FIL.kam) html += `<span class="pill pill-kam" onclick="selectFilter('kam','','')">👤 ${FIL.kam} <span class="pill-remove">✕</span></span>`;
+  if (FIL.vendor) html += `<span class="pill pill-vendor" onclick="selectFilter('vendor','','')">🏪 ${FIL.vendor} <span class="pill-remove">✕</span></span>`;
+  if (FIL.brand) html += `<span class="pill pill-brand" onclick="selectFilter('brand','','')">🏷️ ${FIL.brand} <span class="pill-remove">✕</span></span>`;
+  container.innerHTML = html;
+}
+
+function updateStatsBar() {
+  const isFiltered = FIL.kam || FIL.vendor || FIL.brand;
+  const bar = document.getElementById('stats-bar');
+  bar.classList.toggle('visible', isFiltered);
+  if (isFiltered) {
+    const totalCost = filtered.reduce((s, r) => s + r.u, 0);
+    const vendors = new Set(filtered.map(r => r.v)).size;
+    const brands = new Set(filtered.map(r => r.b)).size;
+    document.getElementById('sb-count').textContent = filtered.length.toLocaleString();
+    document.getElementById('sb-cost').textContent = '$' + totalCost.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    document.getElementById('sb-vendors').textContent = vendors;
+    document.getElementById('sb-brands').textContent = brands;
+  }
+}
+
+function resetFilters() {
+  FIL = { kam: '', vendor: '', brand: '' };
+  ['kam','vendor','brand'].forEach(t => {
+    document.getElementById('fl-' + t).textContent = t.charAt(0).toUpperCase() + t.slice(1) + ': All';
+    document.getElementById('fb-' + t).classList.remove('active-filter');
+  });
+  closeAllDropdowns();
+  updatePills();
+  updateStatsBar();
+  document.getElementById('stats-bar').classList.remove('visible');
+  applyFilters();
+}
+
+// ═══ DROPDOWN LOGIC ═══
+function toggleDropdown(id, btn) {
+  const dd = document.getElementById(id);
+  const isOpen = dd.classList.contains('open');
+  closeAllDropdowns();
+  if (!isOpen) { dd.classList.add('open'); btn.classList.add('open'); }
+}
+function closeAllDropdowns() {
+  document.querySelectorAll('.f-dropdown').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('open'));
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.f-wrap')) closeAllDropdowns();
+});
+function filterOpts(ddId, q) {
+  const opts = document.querySelectorAll(`#${ddId} .f-option:not(:first-child)`);
+  opts.forEach(o => { o.style.display = o.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; });
+}
+
+// ═══ DATA AGGREGATION ═══
+function agg(data) {
+  const vendorMap = {}, brandMap = {}, kamMap = {}, skuMap = {};
+  const supReasons = {'Return MPDS - Failed Delivery':0,'Return from customer':0,'Replacement':0};
+  const custReasons = {'CR12':0,'CR17':0,'CR24':0,'CR06':0,'CR15':0,'other':0};
+  const buckets = {'0-7d':0,'7-14d':0,'14-21d':0,'21+d':0};
+  const bucketCost = {'0-7d':0,'7-14d':0,'14-21d':0,'21+d':0};
+  const weeklyMap = {};
+  const verdicts = {};
+  const poMap = {'Marketplace':0,'Outright':0};
+  let totalAge = 0;
+
+  for (const r of data) {
+    // vendor
+    if (!vendorMap[r.v]) vendorMap[r.v] = {count:0,usd:0,brands:new Set()};
+    vendorMap[r.v].count++; vendorMap[r.v].usd += r.u; vendorMap[r.v].brands.add(r.b);
+    // brand
+    if (!brandMap[r.b]) brandMap[r.b] = {count:0,usd:0,vendors:new Set()};
+    brandMap[r.b].count++; brandMap[r.b].usd += r.u; brandMap[r.b].vendors.add(r.v);
+    // kam
+    if (r.k) {
+      if (!kamMap[r.k]) kamMap[r.k] = {count:0,usd:0,vendors:new Set(),brands:new Set(),age:[]};
+      kamMap[r.k].count++; kamMap[r.k].usd += r.u; kamMap[r.k].vendors.add(r.v); kamMap[r.k].brands.add(r.b); kamMap[r.k].age.push(r.a);
+    }
+    // sku
+    if (!skuMap[r.s]) skuMap[r.s] = {count:0,usd:0};
+    skuMap[r.s].count++; skuMap[r.s].usd += r.u;
+    // reasons
+    if (r.sr in supReasons) supReasons[r.sr]++;
+    const cr = r.cr;
+    if (cr.includes('CR12')) custReasons['CR12']++;
+    else if (cr.includes('CR17')) custReasons['CR17']++;
+    else if (cr.includes('CR24')) custReasons['CR24']++;
+    else if (cr.includes('CR06')) custReasons['CR06']++;
+    else if (cr.includes('CR15')) custReasons['CR15']++;
+    else if (cr.length > 2) custReasons['other']++;
+    // aging - recompute bucket from age
+    let bk; const a=r.a;
+    if(a<=7) bk='0-7d'; else if(a<=14) bk='7-14d'; else if(a<=21) bk='14-21d'; else bk='21+d';
+    buckets[bk]++; bucketCost[bk] += r.u;
+    totalAge += r.a;
+    // weekly
+    if (r.w) { weeklyMap[r.w] = (weeklyMap[r.w]||0) + r.u; }
+    // verdict
+    const sv = r.sc || 'Pending';
+    verdicts[sv] = (verdicts[sv]||0) + 1;
+    // po
+    if (r.pt in poMap) poMap[r.pt]++;
+  }
+
+  const topVendors = Object.entries(vendorMap).sort((a,b)=>b[1].count-a[1].count).slice(0,15);
+  const topVendorsByUsd = Object.entries(vendorMap).sort((a,b)=>b[1].usd-a[1].usd).slice(0,15);
+  const topBrands = Object.entries(brandMap).sort((a,b)=>b[1].count-a[1].count).slice(0,15);
+  const topBrandsByUsd = Object.entries(brandMap).sort((a,b)=>b[1].usd-a[1].usd).slice(0,15);
+  const topKams = Object.entries(kamMap).sort((a,b)=>b[1].count-a[1].count);
+  const topSkus = Object.entries(skuMap).sort((a,b)=>b[1].count-a[1].count);
+  const weeks = Object.entries(weeklyMap).filter(([w])=>w>='2025-W01').sort((a,b)=>a[0].localeCompare(b[0]));
+
+  return { vendorMap, brandMap, kamMap, topVendors, topVendorsByUsd, topBrands, topBrandsByUsd, topKams, topSkus,
+    supReasons, custReasons, buckets, bucketCost, weeks, verdicts, poMap,
+    totalAge, n: data.length };
+}
+
+// ═══ CHART HELPERS ═══
+function mkDonut(id, labels, data, colors) {
+  if (CH[id]) { CH[id].data.datasets[0].data = data; CH[id].update('none'); return; }
+  CH[id] = new Chart(document.getElementById(id), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#0f1623', hoverOffset: 4 }] },
+    options: { cutout: '72%', animation: { duration: 400 }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed.toLocaleString()}` } } } }
+  });
+}
+function mkBarH(id, labels, data, colors, usd=false) {
+  if (CH[id]) {
+    CH[id].data.labels = labels; CH[id].data.datasets[0].data = data;
+    CH[id].data.datasets[0].backgroundColor = colors; CH[id].update('none'); return;
+  }
+  CH[id] = new Chart(document.getElementById(id), {
+    type: 'bar', data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 4, borderSkipped: false }] },
+    options: { indexAxis: 'y', animation: { duration: 400 }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => usd ? ` $${c.parsed.x.toLocaleString('en',{minimumFractionDigits:0,maximumFractionDigits:0})}` : ` ${c.parsed.x.toLocaleString()}` } } },
+      scales: { x: { grid: { color: gc }, ticks: { color: lc, font: { size: 9 } } }, y: { grid: { display: false }, ticks: { color: lc, font: { size: 9 } } } } }
+  });
+}
+function mkBarV(id, labels, data, colors, usd=false) {
+  if (CH[id]) {
+    CH[id].data.labels = labels; CH[id].data.datasets[0].data = data;
+    CH[id].data.datasets[0].backgroundColor = colors; CH[id].update('none'); return;
+  }
+  CH[id] = new Chart(document.getElementById(id), {
+    type: 'bar', data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 5, borderSkipped: false }] },
+    options: { animation: { duration: 400 }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => usd ? ` $${c.parsed.y.toLocaleString('en',{minimumFractionDigits:0,maximumFractionDigits:0})}` : ` ${c.parsed.y.toLocaleString()}` } } },
+      scales: { x: { grid: { color: gc }, ticks: { color: lc, font: { size: 9 } } }, y: { grid: { color: gc }, ticks: { color: lc, font: { size: 9 } } } } }
+  });
+}
+function mkStacked(id, labels, datasets) {
+  if (CH[id]) {
+    CH[id].data.labels = labels;
+    datasets.forEach((ds, i) => { if (CH[id].data.datasets[i]) CH[id].data.datasets[i].data = ds.data; });
+    CH[id].update('none'); return;
+  }
+  CH[id] = new Chart(document.getElementById(id), {
+    type: 'bar', data: { labels, datasets },
+    options: { animation: { duration: 400 }, plugins: { legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10, color: lc } } },
+      scales: { x: { stacked: true, grid: { display: false }, ticks: { color: lc, font: { size: 9 } } }, y: { stacked: true, grid: { color: gc }, ticks: { color: lc, font: { size: 9 } } } } }
+  });
+}
+
+function fmt$(v) { return '$' + v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function reasonBadge(r) {
+  if (!r) return '';
+  if (r.includes('MPDS')) return '<span class="badge b2">MPDS</span>';
+  if (r.includes('customer') || r.includes('Customer')) return '<span class="badge b1">From Cust.</span>';
+  if (r.includes('Replacement')) return '<span class="badge b3">Replacement</span>';
+  return '<span class="badge b6">' + r.slice(0,12) + '</span>';
+}
+
+// ═══ MAIN UPDATE ═══
+function updateAll() {
+  const d = agg(filtered);
+  const activePage = document.querySelector('.page.active').id.replace('page-','');
+  updateOverview(d);
+  if (activePage === 'aging') updateAging(d);
+  if (activePage === 'vendor') updateVendor(d);
+  if (activePage === 'brand') updateBrand(d);
+  if (activePage === 'kam') updateKam(d);
+  if (activePage === 'reasons') updateReasons(d);
+  if (activePage === 'financial') updateFinancial(d);
+  if (activePage === 'detail') initDetailPage();
+  document.getElementById('nb-total').textContent = d.n.toLocaleString();
+}
+
+function updateOverview(d) {
+  const totalCost = filtered.reduce((s,r)=>s+r.u,0);
+  const avgAge = d.n > 0 ? (d.totalAge / d.n).toFixed(1) : 0;
+  const verdictTotal = Object.values(d.verdicts).reduce((s,v)=>s+v,0) - (d.verdicts['Pending']||0) - (d.verdicts['']||0);
+  const uVendors = new Set(filtered.map(r=>r.v)).size;
+  const uBrands = new Set(filtered.map(r=>r.b)).size;
+
+  document.getElementById('kv-returns').textContent = d.n.toLocaleString();
+  document.getElementById('kv-vendors').textContent = uVendors.toLocaleString();
+  document.getElementById('kv-brands').textContent = uBrands.toLocaleString();
+  document.getElementById('kv-cogp').textContent = fmt$(totalCost);
+  document.getElementById('kv-age').textContent = avgAge;
+  document.getElementById('kv-verdicts').textContent = verdictTotal.toLocaleString();
+  document.getElementById('kc-verdicts').textContent = d.n > 0 ? (verdictTotal/d.n*100).toFixed(1) + '% of returns' : '—';
+
+  // Supplier donut
+  const supVals = [d.supReasons['Return MPDS - Failed Delivery']||0, d.supReasons['Return from customer']||0, d.supReasons['Replacement']||0];
+  const supTotal = supVals.reduce((s,v)=>s+v,0);
+  mkDonut('c-sup',['MPDS Failed','From Customer','Replacement'],supVals,['#f97316','#06b6d4','#a855f7']);
+  document.getElementById('l-mpds').innerHTML = (supVals[0]||0).toLocaleString() + `<span class="legend-pct">${supTotal?((supVals[0]/supTotal*100).toFixed(1))+'%':''}</span>`;
+  document.getElementById('l-rfc').innerHTML = (supVals[1]||0).toLocaleString() + `<span class="legend-pct">${supTotal?((supVals[1]/supTotal*100).toFixed(1))+'%':''}</span>`;
+  document.getElementById('l-rep').innerHTML = (supVals[2]||0).toLocaleString() + `<span class="legend-pct">${supTotal?((supVals[2]/supTotal*100).toFixed(1))+'%':''}</span>`;
+  document.getElementById('l-sup-total').textContent = supTotal.toLocaleString();
+  document.getElementById('sup-count-pill').textContent = supTotal.toLocaleString();
+
+  // Customer donut
+  const crVals = [d.custReasons['CR12'],d.custReasons['CR17'],d.custReasons['CR24'],d.custReasons['CR06'],d.custReasons['CR15'],d.custReasons['other']];
+  const crTotal = crVals.reduce((s,v)=>s+v,0);
+  mkDonut('c-cust',['Broken','Fake','Wrong Item','Stopped','Missing','Other'],crVals,['#f97316','#06b6d4','#a855f7','#22c55e','#f43f5e','#eab308']);
+  ['l-cr1','l-cr2','l-cr3','l-cr4','l-cr5','l-cr6'].forEach((id,i)=>{ document.getElementById(id).textContent = crVals[i].toLocaleString(); });
+  document.getElementById('l-cust-total').textContent = crTotal.toLocaleString();
+  document.getElementById('cust-count-pill').textContent = crTotal.toLocaleString();
+
+  // Aging bar
+  const bkLabels = ['0–7d','7–14d','14–21d','21+ d (High Risk)'];
+  const bkKeys = ['0-7d','7-14d','14-21d','21+d'];
+  mkBarV('c-aging-ov', bkLabels, bkKeys.map(k=>d.buckets[k]||0), ['#22c55e','#06b6d4','#eab308','#f43f5e']);
+  // update mini bucket grid
+  const bkOvIds = ['bk-ov-0','bk-ov-1','bk-ov-2','bk-ov-3'];
+  bkKeys.forEach((k,i)=>{ const el=document.getElementById(bkOvIds[i]); if(el) el.textContent=(d.buckets[k]||0).toLocaleString(); });
+
+  // Top vendors
+  const tv = d.topVendors.slice(0,10);
+  mkBarH('c-vc', tv.map(([n])=>n.length>18?n.slice(0,18)+'…':n), tv.map(([,v])=>v.count), P.slice(0,10));
+  const tvusd = d.topVendorsByUsd.slice(0,10);
+  mkBarH('c-vusd', tvusd.map(([n])=>n.length>18?n.slice(0,18)+'…':n), tvusd.map(([,v])=>v.usd), P.slice(0,10).reverse(), true);
+
+  // Top brands
+  const tb = d.topBrands.slice(0,10);
+  mkBarH('c-bc', tb.map(([n])=>n), tb.map(([,v])=>v.count), P.slice(0,10));
+
+  // SKU table
+  updateSkuTable(d.topSkus);
+
+  // Trend
+  const weeks = d.weeks.slice(-28);
+  if (!CH['c-trend']) {
+    CH['c-trend'] = new Chart(document.getElementById('c-trend'), {
+      type: 'line', data: { labels: weeks.map(([w])=>w.replace('2025-','').replace('2026-','26-')), datasets: [{ data: weeks.map(([,v])=>v), borderColor:'#06b6d4', backgroundColor:'rgba(6,182,212,.08)', fill:true, tension:0.4, pointRadius:2, borderWidth:2 }] },
+      options: { animation:{duration:400}, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt$(c.parsed.y)}`}}}, scales:{x:{grid:{color:gc},ticks:{color:lc,maxRotation:45,font:{size:8}}},y:{grid:{color:gc},ticks:{color:lc,callback:v=>fmt$(v)}}}}
+    });
+  } else {
+    CH['c-trend'].data.labels = weeks.map(([w])=>w.replace('2025-','').replace('2026-','26-'));
+    CH['c-trend'].data.datasets[0].data = weeks.map(([,v])=>v);
+    CH['c-trend'].update('none');
+  }
+
+  // Verdict bars
+  const verdictOrder = [['Vendor Replacement','#06b6d4'],['D-Review','#f97316'],['Forfeit (Jumia Responsibility)','#a855f7'],['Pending','#4a5f82']];
+  const vTotal = Object.values(d.verdicts).reduce((s,v)=>s+v,0);
+  document.getElementById('verdict-bars').innerHTML = verdictOrder.map(([lbl,col])=>{
+    const cnt = d.verdicts[lbl]||0;
+    const pct = vTotal ? (cnt/vTotal*100).toFixed(1) : 0;
+    return `<div class="prog-row"><span class="prog-label" style="width:120px">${lbl.replace(' (Jumia Responsibility)','')}</span><div class="prog-bar-wrap"><div class="prog-bar" style="width:${pct}%;background:${col}"></div></div><span class="prog-val">${cnt}</span></div>`;
+  }).join('');
+
+  // PO type
+  mkBarV('c-po',['Marketplace','Outright'],[d.poMap['Marketplace']||0,d.poMap['Outright']||0],['#f97316','#06b6d4']);
+
+  // KAM leaderboard
+  document.getElementById('kam-lb-tbody').innerHTML = d.topKams.slice(0,8).map(([name,v],i)=>
+    `<tr><td><span class="badge" style="background:${P[i]}33;color:${P[i]};font-size:11px;padding:2px 8px">${i+1}</span></td><td style="color:#fff;font-weight:700;font-size:13px">${name}</td><td style="color:#06b6d4;font-weight:800;font-size:13px">${v.count}</td><td style="color:#22c55e;font-weight:800;font-size:13px">${fmt$(v.usd)}</td></tr>`
+  ).join('') || '<tr><td colspan="4" class="empty-state">No data for current filters</td></tr>';
+}
+
+// SKU pagination
+let allSkus = [];
+function updateSkuTable(skus) {
+  allSkus = skus;
+  renderSkuPage();
+}
+function renderSkuPage() {
+  const page = allSkus.slice(skuPageN * 10, (skuPageN+1)*10);
+  document.getElementById('sku-tbody').innerHTML = page.map(([sku,v])=>
+    `<tr><td title="${sku}" style="font-size:10px;font-family:monospace;color:#06b6d4">${sku.slice(0,22)}</td><td style="font-weight:800;color:#fff">${v.count}</td><td style="color:#22c55e;font-weight:700">${fmt$(v.usd)}</td></tr>`
+  ).join('') || '<tr><td colspan="3" class="empty-state">No SKU data</td></tr>';
+  document.getElementById('sku-pag-info').textContent = `${skuPageN*10+1}–${Math.min((skuPageN+1)*10, allSkus.length)} of ${allSkus.length}`;
+}
+function skuPage(dir) { skuPageN = Math.max(0, Math.min(Math.ceil(allSkus.length/10)-1, skuPageN+dir)); renderSkuPage(); }
+
+function updateAging(d) {
+  const bkKeys = ['0-7d','7-14d','14-21d','21+d'];
+  const bkLabels = ['0–7 Days\n(Low)', '7–14 Days\n(Medium)', '14–21 Days\n(Watch)', '21+ Days\n(HIGH RISK)'];
+  const cols = ['#22c55e','#06b6d4','#eab308','#f43f5e'];
+  const ids = ['ag-0','ag-1','ag-2','ag-3'];
+  const idc = ['ag-0c','ag-1c','ag-2c','ag-3c'];
+
+  bkKeys.forEach((k,i) => {
+    const el = document.getElementById(ids[i]);
+    const elc = document.getElementById(idc[i]);
+    if(el) el.textContent = (d.buckets[k]||0).toLocaleString();
+    if(elc) elc.textContent = fmt$(d.bucketCost[k]||0) + ' COGP';
+  });
+
+  // Highlight 21+ in red
+  const el3 = document.getElementById('ag-3c');
+  if(el3) el3.style.color = (d.buckets['21+d']||0) > 0 ? '#f43f5e' : 'var(--text2)';
+
+  // Main bar chart - RETURNS COUNT PER BUCKET
+  const counts = bkKeys.map(k => d.buckets[k]||0);
+  if (!CH['c-ag-main']) {
+    CH['c-ag-main'] = new Chart(document.getElementById('c-ag-main'), {
+      type: 'bar',
+      data: {
+        labels: ['✅  0–7 Days', '🔵  7–14 Days', '⚠️  14–21 Days', '🔴  21+ Days (High Risk)'],
+        datasets: [{
+          label: 'Returns',
+          data: counts,
+          backgroundColor: ['rgba(34,197,94,.25)','rgba(6,182,212,.25)','rgba(234,179,8,.25)','rgba(244,63,94,.25)'],
+          borderColor: cols,
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        animation: { duration: 500 },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` ${c.parsed.y.toLocaleString()} returns` } },
+          datalabels: { display: false }
+        },
+        scales: {
+          x: { grid: { color: gc }, ticks: { color: '#c8d6f0', font: { size: 13, weight: '600' } } },
+          y: { grid: { color: gc }, ticks: { color: lc, font: { size: 12 } },
+            title: { display: true, text: 'Number of Returns', color: lc, font: { size: 11 } } }
+        }
+      }
+    });
+  } else {
+    CH['c-ag-main'].data.datasets[0].data = counts;
+    CH['c-ag-main'].update('none');
+  }
+
+  // COGP bar chart
+  mkBarV('c-ag-cost',
+    ['0–7d','7–14d','14–21d','21+ (High Risk)'],
+    bkKeys.map(k => d.bucketCost[k]||0),
+    cols, true
+  );
+
+  // KAM age stacked
+  const kamEntries = d.topKams.slice(0,8);
+  mkStacked('c-kam-age', kamEntries.map(([n])=>n.split(' ')[0]), [
+    {label:'0–7d',  data:kamEntries.map(([,v])=>v.age.filter(a=>a<=7).length),            backgroundColor:'#22c55e',borderRadius:3},
+    {label:'7–14d', data:kamEntries.map(([,v])=>v.age.filter(a=>a>7&&a<=14).length),      backgroundColor:'#06b6d4',borderRadius:3},
+    {label:'14–21d',data:kamEntries.map(([,v])=>v.age.filter(a=>a>14&&a<=21).length),     backgroundColor:'#eab308',borderRadius:3},
+    {label:'21+ 🔴',data:kamEntries.map(([,v])=>v.age.filter(a=>a>21).length),            backgroundColor:'#f43f5e',borderRadius:3},
+  ]);
+
+  // Risk table
+  const total = d.n || 1;
+  const risks = [
+    ['✅ 0–7 Days',       '0-7d',  'b4', '✅ Low'],
+    ['🔵 7–14 Days',      '7-14d', 'b2', '🔵 Medium'],
+    ['⚠️ 14–21 Days',    '14-21d','b6', '⚠️ Watch'],
+    ['🔴 21+ Days',       '21+d',  'b5', '🔴 High Risk'],
+  ];
+  // compute avg ages per bucket from filtered data
+  const avgAges = {};
+  bkKeys.forEach(k => {
+    let bkRecs; const a=k;
+    if(k==='0-7d')   bkRecs = filtered.filter(r=>r.a<=7);
+    else if(k==='7-14d') bkRecs = filtered.filter(r=>r.a>7&&r.a<=14);
+    else if(k==='14-21d') bkRecs = filtered.filter(r=>r.a>14&&r.a<=21);
+    else bkRecs = filtered.filter(r=>r.a>21);
+    avgAges[k] = bkRecs.length ? (bkRecs.reduce((s,r)=>s+r.a,0)/bkRecs.length).toFixed(1) : '—';
+  });
+
+  document.getElementById('aging-risk-tbody').innerHTML = risks.map(([lbl,k,bc,risk]) => {
+    const cnt = d.buckets[k]||0;
+    const pct = (cnt/total*100).toFixed(1);
+    return `<tr>
+      <td style="font-size:13px">${lbl}</td>
+      <td style="font-size:14px;font-weight:800;color:#fff">${cnt.toLocaleString()}</td>
+      <td style="font-size:13px;color:var(--text2)">${pct}%</td>
+      <td style="font-size:13px;color:#22c55e">${fmt$(d.bucketCost[k]||0)}</td>
+      <td style="font-size:13px;color:var(--text2)">${avgAges[k]} days</td>
+      <td><span class="badge ${bc}" style="font-size:11px;padding:3px 9px">${risk}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Insight boxes
+  const hr = document.getElementById('ins-highrisk');
+  const wt = document.getElementById('ins-watch');
+  const gd = document.getElementById('ins-good');
+  if(hr) hr.textContent = (d.buckets['21+d']||0).toLocaleString() + ' returns · ' + fmt$(d.bucketCost['21+d']||0) + ' COGP';
+  if(wt) wt.textContent = (d.buckets['14-21d']||0).toLocaleString() + ' returns · ' + fmt$(d.bucketCost['14-21d']||0) + ' COGP';
+  if(gd) gd.textContent = (d.buckets['0-7d']||0).toLocaleString() + ' returns · ' + fmt$(d.bucketCost['0-7d']||0) + ' COGP';
+}
+
+function updateVendor(d) {
+  const tv = d.topVendors.slice(0,15);
+  const tvusd = d.topVendorsByUsd.slice(0,15);
+  mkBarH('c-vend-f1', tv.map(([n])=>n.length>22?n.slice(0,22)+'…':n), tv.map(([,v])=>v.count), P.slice(0,15));
+  mkBarH('c-vend-f2', tvusd.map(([n])=>n.length>22?n.slice(0,22)+'…':n), tvusd.map(([,v])=>v.usd), P.slice(0,15).reverse(), true);
+
+  // vendor table
+  document.getElementById('vt-count').textContent = Object.keys(d.vendorMap).length + ' vendors in filter';
+  document.getElementById('vt').innerHTML = tv.map(([name,v],i)=> {
+    const br = [...v.brands].slice(0,3).join(', ');
+    const avg = v.count ? (v.usd/v.count).toFixed(1) : 0;
+    return `<tr><td>${i+1}</td><td>${name}</td><td>${v.count}</td><td>${fmt$(v.usd)}</td><td>${v.brands.size}</td><td></td><td>$${avg}</td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty-state">No vendor data</td></tr>';
+
+  // reason mix stacked
+  const top8v = d.topVendors.slice(0,8);
+  mkStacked('c-vend-mix', top8v.map(([n])=>n.split(' ')[0].slice(0,8)), [
+    {label:'MPDS',data:top8v.map(([n])=>{const recs=filtered.filter(r=>r.v===n&&r.sr.includes('MPDS'));return recs.length;}),backgroundColor:'#06b6d4',borderRadius:3},
+    {label:'Cust.',data:top8v.map(([n])=>{const recs=filtered.filter(r=>r.v===n&&r.sr.includes('customer'));return recs.length;}),backgroundColor:'#f97316',borderRadius:3},
+    {label:'Replac.',data:top8v.map(([n])=>{const recs=filtered.filter(r=>r.v===n&&r.sr==='Replacement');return recs.length;}),backgroundColor:'#a855f7',borderRadius:3},
+  ]);
+
+  // PO donut
+  mkDonut('c-po2',['Marketplace','Outright'],[d.poMap['Marketplace']||0,d.poMap['Outright']||0],['#f97316','#06b6d4']);
+  document.getElementById('po-mp').textContent = (d.poMap['Marketplace']||0).toLocaleString();
+  document.getElementById('po-out').textContent = (d.poMap['Outright']||0).toLocaleString();
+}
+
+function updateBrand(d) {
+  const tb = d.topBrands.slice(0,15);
+  const tbusd = d.topBrandsByUsd.slice(0,15);
+  mkBarH('c-br-cnt', tb.map(([n])=>n), tb.map(([,v])=>v.count), P.slice(0,15));
+  mkBarH('c-br-usd', tbusd.map(([n])=>n), tbusd.map(([,v])=>v.usd), P.slice(0,15).reverse(), true);
+
+  // brand table
+  document.getElementById('bt-count').textContent = Object.keys(d.brandMap).length + ' brands in filter';
+  document.getElementById('bt').innerHTML = tb.map(([name,v],i)=>{
+    const avg = v.count ? (v.usd/v.count).toFixed(1) : 0;
+    return `<tr><td>${i+1}</td><td>${name}</td><td>${v.count}</td><td>${fmt$(v.usd)}</td><td>$${avg}</td><td>${v.vendors.size}</td><td></td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty-state">No brand data</td></tr>';
+
+  // bubble
+  if (!CH['c-bubble']) {
+    CH['c-bubble'] = new Chart(document.getElementById('c-bubble'), {
+      type:'bubble', data:{datasets:tb.slice(0,12).map(([n,v],i)=>({label:n,data:[{x:v.count,y:v.usd,r:Math.min(Math.sqrt(v.vendors.size)*3+4,24)}],backgroundColor:P[i]+'88',borderColor:P[i]}))},
+      options:{animation:{duration:400},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.x} ret · ${fmt$(c.raw.y)}`}}},scales:{x:{grid:{color:gc},ticks:{color:lc},title:{display:true,text:'Return Count',color:lc,font:{size:9}}},y:{grid:{color:gc},ticks:{color:lc,callback:v=>fmt$(v)},title:{display:true,text:'COGP (USD)',color:lc,font:{size:9}}}}}
+    });
+  } else {
+    CH['c-bubble'].data.datasets = tb.slice(0,12).map(([n,v],i)=>({label:n,data:[{x:v.count,y:v.usd,r:Math.min(Math.sqrt(v.vendors.size)*3+4,24)}],backgroundColor:P[i]+'88',borderColor:P[i]}));
+    CH['c-bubble'].update('none');
+  }
+
+  // insights
+  const top = tb[0];
+  const topCost = tbusd[0];
+  document.getElementById('brand-insights').innerHTML = tb.slice(0,6).map(([n,v])=>
+    `<div>📦 <strong style="color:#f97316">${n}</strong> — ${v.count} returns · ${fmt$(v.usd)} · $${v.count?(v.usd/v.count).toFixed(1):0}/unit</div>`
+  ).join('');
+}
+
+function updateKam(d) {
+  const topKams = d.topKams.slice(0,11);
+  mkBarH('c-kam-cnt', topKams.map(([n])=>n), topKams.map(([,v])=>v.count), P.slice(0,11));
+  mkBarH('c-kam-usd', topKams.map(([n])=>n), topKams.map(([,v])=>v.usd), P.slice(0,11).reverse(), true);
+
+  // age stacked
+  const kn = topKams.slice(0,8);
+  mkStacked('c-kam-age2', kn.map(([n])=>n.split(' ')[0]), [
+    {label:'0–7d',data:kn.map(([,v])=>v.age.filter(a=>a<=7).length),backgroundColor:'#22c55e',borderRadius:3},
+    {label:'7–14d',data:kn.map(([,v])=>v.age.filter(a=>a>7&&a<=14).length),backgroundColor:'#06b6d4',borderRadius:3},
+    {label:'14–21d',data:kn.map(([,v])=>v.age.filter(a=>a>14&&a<=21).length),backgroundColor:'#eab308',borderRadius:3},
+    {label:'21+ (High Risk)',data:kn.map(([,v])=>v.age.filter(a=>a>21).length),backgroundColor:'#f43f5e',borderRadius:3},
+  ]);
+
+  // table
+  document.getElementById('kt').innerHTML = topKams.map(([name,v],i)=>
+    `<tr><td>${i+1}</td><td>${name}</td><td>${v.count}</td><td>${fmt$(v.usd)}</td><td>${v.vendors.size}</td><td>${v.brands.size}</td></tr>`
+  ).join('') || '<tr><td colspan="6" class="empty-state">No KAM data</td></tr>';
+
+  // efficiency
+  const mx = Math.max(...topKams.map(([,v])=>v.count?v.usd/v.count:0));
+  document.getElementById('kam-eff').innerHTML = [...topKams].sort((a,b)=>(a[1].usd/a[1].count)-(b[1].usd/b[1].count)).map(([name,v])=>{
+    const avg = v.count ? v.usd/v.count : 0;
+    const pct = mx ? (avg/mx*100).toFixed(1) : 0;
+    const col = avg<30?'#22c55e':avg<80?'#eab308':avg<150?'#f97316':'#f43f5e';
+    return `<div class="prog-row"><span class="prog-label" style="width:155px">${name}</span><div class="prog-bar-wrap"><div class="prog-bar" style="width:${pct}%;background:${col}"></div></div><span class="prog-val">$${avg.toFixed(1)}</span></div>`;
+  }).join('');
+}
+
+// ═══ NAVIGATION ═══
+const pageInited = {};
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  const d = agg(filtered);
+  if (id==='aging') updateAging(d);
+  if (id==='vendor') updateVendor(d);
+  if (id==='brand') updateBrand(d);
+  if (id==='kam') updateKam(d);
+  if (id==='reasons') updateReasons(d);
+  if (id==='financial') updateFinancial(d);
+  if (id==='detail') initDetailPage();
+}
+
+
+
+// ═══ FINANCIAL IMPACT PAGE ═══
+function updateFinancial(d) {
+  const totalCost = filtered.reduce((s,r)=>s+r.u,0);
+  const avgCost = d.n ? totalCost/d.n : 0;
+  const riskCost = filtered.filter(r=>r.a>21).reduce((s,r)=>s+r.u,0);
+  const riskPct = totalCost ? (riskCost/totalCost*100).toFixed(1) : 0;
+
+  const el = id => document.getElementById(id);
+  if(el('fi-total')) el('fi-total').textContent = fmt$(totalCost);
+  if(el('fi-avg'))   el('fi-avg').textContent   = '$' + avgCost.toFixed(1);
+  if(el('fi-risk'))  el('fi-risk').textContent  = fmt$(riskCost);
+  const riskPctEl = el('fi-risk')?.nextElementSibling;
+  if(riskPctEl) riskPctEl.textContent = riskPct + '% of total COGP 🔴';
+
+  // Top vendor by cost
+  const topVusd = d.topVendorsByUsd[0];
+  if(topVusd) {
+    if(el('fi-top-vendor')) el('fi-top-vendor').textContent = topVusd[0].length>14 ? topVusd[0].slice(0,14)+'…' : topVusd[0];
+    if(el('fi-top-vendor-usd')) el('fi-top-vendor-usd').textContent = fmt$(topVusd[1].usd) + ' COGP';
+  }
+
+  // Vendor COGP bar
+  const tv12 = d.topVendorsByUsd.slice(0,12);
+  mkBarH('c-fi-vend', tv12.map(([n])=>n.length>20?n.slice(0,20)+'…':n), tv12.map(([,v])=>v.usd), P.slice(0,12), true);
+
+  // Brand COGP bar
+  const tb12 = d.topBrandsByUsd.slice(0,12);
+  mkBarH('c-fi-brand', tb12.map(([n])=>n), tb12.map(([,v])=>v.usd), P.slice(0,12).reverse(), true);
+
+  // Trend
+  const weeks = d.weeks.slice(-28);
+  if (!CH['c-fi-trend']) {
+    CH['c-fi-trend'] = new Chart(document.getElementById('c-fi-trend'), {
+      type:'line',
+      data:{labels:weeks.map(([w])=>w.replace('2025-','').replace('2026-','26-')),
+        datasets:[{data:weeks.map(([,v])=>v),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.08)',fill:true,tension:0.4,pointRadius:2,borderWidth:2}]},
+      options:{animation:{duration:400},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt$(c.parsed.y)}`}}},
+        scales:{x:{grid:{color:gc},ticks:{color:lc,maxRotation:45,font:{size:8}}},y:{grid:{color:gc},ticks:{color:lc,callback:v=>fmt$(v)}}}}
+    });
+  } else {
+    CH['c-fi-trend'].data.labels = weeks.map(([w])=>w.replace('2025-','').replace('2026-','26-'));
+    CH['c-fi-trend'].data.datasets[0].data = weeks.map(([,v])=>v);
+    CH['c-fi-trend'].update('none');
+  }
+
+  // KAM cost per return (efficiency)
+  const kamEff = d.topKams.slice(0,10).map(([n,v])=>[n, v.count ? v.usd/v.count : 0]);
+  mkBarH('c-fi-kam', kamEff.map(([n])=>n.split(' ')[0]), kamEff.map(([,v])=>v),
+    kamEff.map(([,v])=>v<30?'#22c55e':v<80?'#eab308':v<150?'#f97316':'#f43f5e'), true);
+
+  // Age bucket cost
+  const bkKeys = ['0-7d','7-14d','14-21d','21+d'];
+  const bkCols = ['#22c55e','#06b6d4','#eab308','#f43f5e'];
+  mkBarV('c-fi-age', ['0–7d','7–14d','14–21d','21+d (🔴)'], bkKeys.map(k=>d.bucketCost[k]||0), bkCols, true);
+
+  // Age tiles
+  const ageTileEl = el('fi-age-tiles');
+  if(ageTileEl) {
+    const labels = ['✅ 0–7d','🔵 7–14d','⚠️ 14–21d','🔴 21+d'];
+    ageTileEl.innerHTML = bkKeys.map((k,i)=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;background:${bkCols[i]}15;border:1px solid ${bkCols[i]}40;border-radius:7px;padding:6px 10px">
+        <span style="font-size:11px;color:${bkCols[i]};font-weight:600">${labels[i]}</span>
+        <span style="font-size:13px;font-weight:800;color:#fff">${fmt$(d.bucketCost[k]||0)}</span>
+      </div>`).join('');
+  }
+
+  // Cost by reason
+  const supCosts = [
+    filtered.filter(r=>r.sr.includes('customer')).reduce((s,r)=>s+r.u,0),
+    filtered.filter(r=>r.sr.includes('MPDS')).reduce((s,r)=>s+r.u,0),
+    filtered.filter(r=>r.sr==='Replacement').reduce((s,r)=>s+r.u,0),
+  ];
+  mkBarV('c-fi-reason', ['From Customer','MPDS Failed','Replacement'], supCosts, ['#f97316','#06b6d4','#a855f7'], true);
+
+  // Financial risk table
+  const topV = d.topVendorsByUsd.slice(0,12);
+  const maxUsd = topV[0]?topV[0][1].usd:1;
+  document.getElementById('fi-tbody').innerHTML = topV.map(([name,v],i)=>{
+    const avg = v.count ? v.usd/v.count : 0;
+    const risk = avg>100?'<span class="badge b5">🔴 High</span>':avg>40?'<span class="badge b1">⚠️ Med</span>':'<span class="badge b4">✅ Low</span>';
+    return `<tr>
+      <td style="color:var(--text2)">${i+1}</td>
+      <td style="font-size:12px;color:#fff;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</td>
+      <td style="color:#06b6d4;font-weight:700">${v.count}</td>
+      <td style="color:#22c55e;font-weight:800">${fmt$(v.usd)}</td>
+      <td style="color:#eab308;font-weight:700">$${avg.toFixed(1)}</td>
+      <td>${risk}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══ RETURN REASONS PAGE ═══
+function updateReasons(d) {
+  // KPI updates
+  const supVals = [
+    d.supReasons['Return MPDS - Failed Delivery']||0,
+    d.supReasons['Return from customer']||0,
+    d.supReasons['Replacement']||0
+  ];
+  const supCosts = [
+    filtered.filter(r=>r.sr.includes('MPDS')).reduce((s,r)=>s+r.u,0),
+    filtered.filter(r=>r.sr.includes('customer')).reduce((s,r)=>s+r.u,0),
+    filtered.filter(r=>r.sr==='Replacement').reduce((s,r)=>s+r.u,0),
+  ];
+
+  ['rr-mpds','rr-rfc','rr-rep'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=supVals[i].toLocaleString();});
+  ['rr-s1-cnt','rr-s2-cnt','rr-s3-cnt'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=supVals[i].toLocaleString();});
+  ['rr-s1-usd','rr-s2-usd','rr-s3-usd'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.textContent=fmt$(supCosts[i]);});
+
+  // Supplier Reasons bar
+  mkBarH('c-rr-sup',
+    ['MPDS Failed Delivery','Return from Customer','Replacement'],
+    supVals,['#06b6d4','#f97316','#a855f7']
+  );
+
+  // Customer Reasons horizontal bar
+  const crMap = {};
+  for(const r of filtered){if(r.cr){const k=r.cr.slice(0,35);crMap[k]=(crMap[k]||0)+1;}}
+  const crSorted = Object.entries(crMap).sort((a,b)=>b[1]-a[1]).slice(0,9);
+  mkBarH('c-rr-cust', crSorted.map(([k])=>k), crSorted.map(([,v])=>v), P.slice(0,9));
+
+  // Aftersales bar
+  const afMap = {};
+  for(const r of filtered){if(r.cr){const af=r.cr.includes('CR12')?'D10- Tech Issue':r.cr.includes('CR17')?'D07- Wrong Item':r.cr.includes('CR24')?'D07- Wrong Item':r.cr.includes('CR06')?'D10- Tech Issue':null;}}
+  const AF_DATA = [['D10- Tech Issue',201],['D07- Wrong Item',87],['D09- Missing/Damaged',39],['D13- Swapped Item',27],['Lost - Reverse Delivery',15],['LS11- Lost Aftersales',12],['D04- Used/Dirty',10],['D08- Broken Item',7]];
+  // compute from filtered
+  const afFiltered = {};
+  for(const r of filtered){
+    if(!r.cr) continue;
+    let af='';
+    if(r.cr.includes('CR12')||r.cr.includes('CR06')) af='Tech/Quality Issue';
+    else if(r.cr.includes('CR17')) af='Fake/Unauthentic';
+    else if(r.cr.includes('CR24')) af='Wrong Item';
+    else if(r.cr.includes('CR15')) af='Missing Parts';
+    else if(r.cr.includes('CR20')) af='Fit Issue';
+    else if(r.cr.includes('CR13')) af='Damaged Packaging';
+    else af='Other';
+    afFiltered[af]=(afFiltered[af]||0)+1;
+  }
+  const afSorted = Object.entries(afFiltered).sort((a,b)=>b[1]-a[1]);
+  mkBarH('c-rr-af', afSorted.map(([k])=>k), afSorted.map(([,v])=>v), P.slice(3,11));
+
+  // KAM by reason stacked
+  const kamNames = d.topKams.slice(0,8).map(([n])=>n.split(' ')[0]);
+  const kamEntries = d.topKams.slice(0,8);
+  mkStacked('c-rr-kam', kamNames, [
+    {label:'MPDS Failed',data:kamEntries.map(([n])=>filtered.filter(r=>r.k===n&&r.sr.includes('MPDS')).length),backgroundColor:'#06b6d4',borderRadius:3},
+    {label:'From Customer',data:kamEntries.map(([n])=>filtered.filter(r=>r.k===n&&r.sr.includes('customer')).length),backgroundColor:'#f97316',borderRadius:3},
+    {label:'Replacement',data:kamEntries.map(([n])=>filtered.filter(r=>r.k===n&&r.sr==='Replacement').length),backgroundColor:'#a855f7',borderRadius:3},
+  ]);
+
+  // Cost by reason
+  mkBarH('c-rr-cost',
+    ['Return from Customer','MPDS Failed Delivery','Replacement'],
+    [supCosts[1],supCosts[0],supCosts[2]],
+    ['#f97316','#06b6d4','#a855f7'],true
+  );
+
+  // SC Verdict donut-style bar
+  const vdata = d.verdicts;
+  mkBarV('c-rr-verdict',
+    ['Vendor Replacement','D-Review','Forfeit (Jumia)'],
+    [vdata['Vendor Replacement']||0, vdata['D-Review']||0, vdata['Forfeit (Jumia Responsibility)']||0],
+    ['#06b6d4','#f97316','#a855f7']
+  );
+
+  // Full CR table
+  const crFull = Object.entries(crMap).sort((a,b)=>b[1]-a[1]);
+  const crTotal = crFull.reduce((s,[,v])=>s+v,0)||1;
+  const crCost = {};
+  for(const r of filtered){if(r.cr){const k=r.cr.slice(0,35);crCost[k]=(crCost[k]||0)+r.u;}}
+  document.getElementById('rr-full-tbody').innerHTML = crFull.map(([code,cnt],i)=>
+    `<tr>
+      <td style="color:var(--text2)">${i+1}</td>
+      <td style="font-size:12px;color:#fff;font-weight:600">${code}</td>
+      <td style="font-size:14px;font-weight:800;color:#06b6d4">${cnt.toLocaleString()}</td>
+      <td style="color:var(--text2)">${(cnt/crTotal*100).toFixed(1)}%</td>
+      <td style="color:#22c55e;font-weight:700">${fmt$(crCost[code]||0)}</td>
+    </tr>`
+  ).join('') || '<tr><td colspan="5" class="empty-state">No data</td></tr>';
+}
+
+// ═══ DETAILED DATA PAGE ═══
+let dtData = [], dtFiltered = [], dtPageN = 0, dtSortKey = '', dtSortAsc = true;
+
+function initDetailPage() {
+  dtData = filtered.map(r => r);
+  dtFiltered = [...dtData];
+  dtPageN = 0;
+  renderDtTable();
+}
+
+function dtSearch(q) {
+  const ql = q.toLowerCase();
+  dtFiltered = dtData.filter(r =>
+    r.k.toLowerCase().includes(ql) ||
+    r.v.toLowerCase().includes(ql) ||
+    r.b.toLowerCase().includes(ql) ||
+    r.s.toLowerCase().includes(ql) ||
+    r.sr.toLowerCase().includes(ql) ||
+    (r.sc||'').toLowerCase().includes(ql)
+  );
+  dtPageN = 0;
+  renderDtTable();
+}
+
+function dtSort(key) {
+  if(dtSortKey === key) dtSortAsc = !dtSortAsc;
+  else { dtSortKey = key; dtSortAsc = true; }
+  dtFiltered.sort((a,b) => {
+    const va = a[key], vb = b[key];
+    if(typeof va === 'number') return dtSortAsc ? va-vb : vb-va;
+    return dtSortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+  });
+  dtPageN = 0;
+  renderDtTable();
+}
+
+function dtPage(dir) {
+  const maxPage = Math.ceil(dtFiltered.length/50)-1;
+  dtPageN = Math.max(0, Math.min(maxPage, dtPageN+dir));
+  renderDtTable();
+}
+
+function ageRiskBadge(a) {
+  if(a<=7)  return '<span class="badge b4" style="font-size:10px">✅ 0–7d</span>';
+  if(a<=14) return '<span class="badge b2" style="font-size:10px">🔵 7–14d</span>';
+  if(a<=21) return '<span class="badge b6" style="font-size:10px">⚠️ 14–21d</span>';
+  return '<span class="badge b5" style="font-size:10px">🔴 21+d</span>';
+}
+function verdictBadge(v) {
+  if(!v||v==='') return '<span class="badge" style="background:rgba(74,95,130,.2);color:#4a5f82">Pending</span>';
+  if(v.includes('Replacement')) return `<span class="badge b2" style="font-size:10px">Vendor Repl.</span>`;
+  if(v.includes('Review')) return `<span class="badge b1" style="font-size:10px">D-Review</span>`;
+  if(v.includes('Forfeit')) return `<span class="badge b5" style="font-size:10px">Forfeit</span>`;
+  return `<span class="badge b6" style="font-size:10px">${v.slice(0,12)}</span>`;
+}
+
+function renderDtTable() {
+  const PAGE_SIZE = 50;
+  const page = dtFiltered.slice(dtPageN*PAGE_SIZE, (dtPageN+1)*PAGE_SIZE);
+  document.getElementById('dt-tbody').innerHTML = page.map(r =>
+    `<tr>
+      <td style="color:#06b6d4;font-weight:600;white-space:nowrap;font-size:12px">${r.k||'—'}</td>
+      <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.v}">${r.v}</td>
+      <td style="font-size:12px;color:#a855f7;font-weight:600">${r.b}</td>
+      <td style="font-family:monospace;font-size:10px;color:#94afd4">${r.s.slice(0,20)}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.sr.replace('Return MPDS - Failed Delivery','MPDS Failed').replace('Return from customer','From Customer')}</td>
+      <td style="font-size:13px;font-weight:700;color:${r.a>21?'#f43f5e':r.a>14?'#eab308':r.a>7?'#06b6d4':'#22c55e'};text-align:center">${r.a}</td>
+      <td style="color:#22c55e;font-weight:700;font-size:13px">${fmt$(r.u)}</td>
+      <td>${verdictBadge(r.sc)}</td>
+      <td>${ageRiskBadge(r.a)}</td>
+    </tr>`
+  ).join('') || '<tr><td colspan="9" class="empty-state"><div class="ei">🔍</div>No records match your search</td></tr>';
+
+  const total = dtFiltered.length;
+  const maxPage = Math.ceil(total/PAGE_SIZE)||1;
+  document.getElementById('dt-pag-info').textContent = `Page ${dtPageN+1} of ${maxPage} · ${total.toLocaleString()} records`;
+  document.getElementById('dt-count-label').textContent = `Showing ${Math.min(total, PAGE_SIZE*(dtPageN+1))} of ${total.toLocaleString()} records`;
+}
+
+function exportCSV() {
+  const headers = ['KAM','Vendor','Brand','SKU','Supplier Reason','Customer Reason','Age (Days)','COGP (USD)','SC Verdict','Age Bucket'];
+  const rows = dtFiltered.map(r => [
+    r.k, r.v, r.b, r.s, r.sr, r.cr, r.a, r.u,
+    r.sc||'Pending',
+    r.a<=7?'0-7d':r.a<=14?'7-14d':r.a<=21?'14-21d':'21+d'
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'jumia_returns_export.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══ BOOT ═══
+updateAll();
+</script>
+</body>
+</html>
